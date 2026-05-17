@@ -66,7 +66,7 @@ npm install
 npm run pack
 ```
 
-打包后会生成 `.aix` 文件，可以上传到灵珠平台测试。
+打包后会生成 `.aix` 文件，可以上传到 [灵珠平台](https://rizon.rokid.com "Rokid灵珠平台") 测试。
 
 ## 真机经验
 
