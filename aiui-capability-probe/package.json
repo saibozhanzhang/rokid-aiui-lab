@@ -1,0 +1,11 @@
+{
+  "name": "aiui-capability-probe",
+  "version": "0.2.0",
+  "type": "module",
+  "private": true,
+  "description": "Rokid Glasses AIUI native capability probe",
+  "scripts": {
+    "dev": "aiui-open . -i pages/index/index",
+    "pack": "aiui-aix pack --optimize -o aiui-capability-probe-0.2.0.aix ."
+  }
+}

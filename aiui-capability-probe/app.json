@@ -1,0 +1,32 @@
+{
+  "name": "眼镜能力探测",
+  "version": "0.2.0",
+  "type": "scene",
+  "category": "developer",
+  "description": "打开即自动运行的 Rokid Glasses AIUI 原生能力探测 Agent",
+  "permissions": [
+    "camera",
+    "speech.tts",
+    "speech.asr",
+    "network"
+  ],
+  "voiceCommands": [
+    "开始能力探测",
+    "眼镜能力探测",
+    "测试相机",
+    "测试网络",
+    "退出"
+  ],
+  "pages": [
+    "pages/index/index"
+  ],
+  "window": {
+    "backgroundColor": "#020402",
+    "navigationBarBackgroundColor": "#020402",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "眼镜能力探测",
+    "viewport": {
+      "width": "device-width"
+    }
+  }
+}

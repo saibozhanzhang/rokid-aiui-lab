@@ -1,0 +1,1319 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>手搓 AIUI Agent</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #111816;
+      --muted: #5b6862;
+      --soft: #eef5f0;
+      --line: #d9e5dd;
+      --green: #25d653;
+      --green-dark: #087c2a;
+      --blue: #286fee;
+      --coral: #ff7448;
+      --paper: #fbfdfb;
+      --panel: #ffffff;
+      --shadow: 0 18px 45px rgba(17, 24, 22, 0.11);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1160px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(251, 253, 251, 0.92);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(217, 229, 221, 0.8);
+    }
+
+    .nav-inner {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .logo-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: var(--ink);
+      position: relative;
+      box-shadow: inset 0 0 0 2px rgba(37, 214, 83, 0.45);
+    }
+
+    .logo-mark::after {
+      content: "";
+      position: absolute;
+      left: 7px;
+      right: 7px;
+      top: 12px;
+      height: 6px;
+      border: 2px solid var(--green);
+      border-radius: 8px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #52615a;
+      font-size: 14px;
+    }
+
+    .nav-links a {
+      padding: 8px 10px;
+      border-radius: 8px;
+    }
+
+    .nav-links a:hover {
+      background: #eef7f1;
+      color: var(--ink);
+    }
+
+    .hero {
+      min-height: calc(100vh - 64px);
+      padding: 52px 0 34px;
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(430px, 1.05fr);
+      gap: 42px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      color: var(--green-dark);
+      font-size: 14px;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(42px, 7vw, 82px);
+      line-height: 0.98;
+      letter-spacing: 0;
+      max-width: 760px;
+    }
+
+    .lead {
+      margin: 22px 0 0;
+      max-width: 580px;
+      color: #3e4b45;
+      font-size: 20px;
+      line-height: 1.65;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-weight: 900;
+      background: var(--ink);
+      color: #ffffff;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(17, 24, 22, 0.15);
+    }
+
+    .btn.secondary {
+      background: #ffffff;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .hero-proof {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 32px;
+      padding: 0 10px;
+      border-radius: 8px;
+      background: #edf8f1;
+      color: #145b2a;
+      font-weight: 800;
+      font-size: 13px;
+      border: 1px solid #ccebd5;
+    }
+
+    .hero-visual {
+      align-self: stretch;
+      min-height: 500px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      background: #111816;
+      position: relative;
+    }
+
+    .hero-visual img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .quick-panel {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      bottom: 22px;
+      padding: 16px;
+      border-radius: 8px;
+      background: rgba(251, 253, 251, 0.93);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .quick-item {
+      padding: 10px;
+      border-radius: 8px;
+      background: #f2f7f3;
+      border: 1px solid #dce8df;
+    }
+
+    .quick-item strong {
+      display: block;
+      color: var(--ink);
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .quick-item span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    section {
+      padding: 60px 0;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 46px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .section-head p {
+      margin: 0;
+      max-width: 460px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    .learn-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .step-card,
+    .choice-card,
+    .pitfall-card,
+    .snippet-box,
+    .builder,
+    .test-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 24px rgba(17, 24, 22, 0.06);
+    }
+
+    .step-card {
+      padding: 18px;
+      min-height: 170px;
+    }
+
+    .num {
+      display: inline-flex;
+      width: 34px;
+      height: 34px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: var(--ink);
+      color: #ffffff;
+      font-weight: 900;
+      margin-bottom: 18px;
+    }
+
+    .step-card h3,
+    .choice-card h3,
+    .pitfall-card h3,
+    .test-card h3 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .step-card p,
+    .choice-card p,
+    .pitfall-card p,
+    .test-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 15px;
+    }
+
+    .choice-layout {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .choice-card {
+      padding: 20px;
+    }
+
+    .choice-card.active {
+      border-color: rgba(37, 214, 83, 0.8);
+      box-shadow: 0 16px 34px rgba(37, 214, 83, 0.14);
+    }
+
+    .switcher {
+      display: flex;
+      gap: 8px;
+      padding: 6px;
+      background: #eaf2ed;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .switcher button {
+      flex: 1;
+      min-height: 42px;
+      border: 0;
+      border-radius: 7px;
+      cursor: pointer;
+      background: transparent;
+      color: #53625b;
+      font-weight: 900;
+    }
+
+    .switcher button.active {
+      background: #ffffff;
+      color: var(--ink);
+      box-shadow: 0 6px 14px rgba(17, 24, 22, 0.08);
+    }
+
+    .builder {
+      padding: 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: #324039;
+      font-weight: 900;
+      font-size: 14px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #cfddd4;
+      border-radius: 8px;
+      padding: 11px 12px;
+      background: #ffffff;
+      color: var(--ink);
+      outline: none;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 84px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 4px rgba(37, 214, 83, 0.13);
+    }
+
+    .output {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .snippet-box {
+      overflow: hidden;
+    }
+
+    .snippet-head {
+      min-height: 44px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #f6faf7;
+    }
+
+    .snippet-head strong {
+      font-size: 14px;
+    }
+
+    .copy {
+      border: 1px solid #cfe0d5;
+      background: #ffffff;
+      border-radius: 7px;
+      min-height: 30px;
+      padding: 0 10px;
+      cursor: pointer;
+      font-weight: 900;
+      color: #21422c;
+    }
+
+    pre {
+      margin: 0;
+      padding: 14px;
+      overflow: auto;
+      background: #0e1713;
+      color: #d8ffdf;
+      font-size: 13px;
+      line-height: 1.55;
+      max-height: 280px;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    .pitfall-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .pitfall-card {
+      padding: 18px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0 8px;
+      border-radius: 7px;
+      background: #fff2ec;
+      color: #a33c17;
+      font-weight: 900;
+      font-size: 12px;
+      margin-bottom: 14px;
+    }
+
+    .tag.ok {
+      background: #e9f9ee;
+      color: #11672d;
+    }
+
+    .test-flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .official-grid,
+    .submit-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .official-card,
+    .submit-card,
+    .link-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 24px rgba(17, 24, 22, 0.06);
+      padding: 18px;
+    }
+
+    .official-card h3,
+    .submit-card h3,
+    .link-card h3 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .official-card p,
+    .submit-card p,
+    .link-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 15px;
+    }
+
+    .official-card ul,
+    .submit-card ul {
+      margin: 12px 0 0;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .link-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .link-card {
+      display: block;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .link-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(37, 214, 83, 0.65);
+      box-shadow: 0 16px 34px rgba(17, 24, 22, 0.1);
+    }
+
+    .small-note {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .test-card {
+      padding: 18px;
+      min-height: 150px;
+    }
+
+    .command-strip {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 16px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: #ffffff;
+    }
+
+    .command-strip code {
+      color: #bbffc7;
+    }
+
+    .footer {
+      padding: 36px 0 48px;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: #ffffff;
+      font-weight: 900;
+      box-shadow: var(--shadow);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 60;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 940px) {
+      .hero,
+      .choice-layout,
+      .output {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        padding-top: 34px;
+        min-height: auto;
+        gap: 26px;
+      }
+
+      .hero-visual {
+        min-height: 360px;
+      }
+
+      .learn-grid,
+      .pitfall-grid,
+      .test-flow,
+      .official-grid,
+      .submit-grid,
+      .link-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .nav-links {
+        display: none;
+      }
+
+      .shell {
+        width: min(100% - 22px, 1160px);
+      }
+
+      .hero {
+        min-height: auto;
+      }
+
+      .hero-visual {
+        min-height: 310px;
+      }
+
+      .quick-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .learn-grid,
+      .pitfall-grid,
+      .test-flow,
+      .official-grid,
+      .submit-grid,
+      .link-grid,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section-head {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .command-strip {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="shell nav-inner">
+      <a class="logo" href="#top" aria-label="回到顶部">
+        <span class="logo-mark" aria-hidden="true"></span>
+        <span>眼镜小应用课</span>
+      </a>
+      <nav class="nav-links" aria-label="页面导航">
+        <a href="#six">照着做</a>
+        <a href="#craft">用 Craft</a>
+        <a href="#official">官方路线</a>
+        <a href="#prep">先准备</a>
+        <a href="#choose">选哪种</a>
+        <a href="#builder">拿模板</a>
+        <a href="#rizon">去灵珠</a>
+        <a href="#pitfalls">别踩坑</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <div class="shell hero">
+      <div>
+        <div class="eyebrow">没写过代码，也能做第一个 AI 眼镜小应用</div>
+        <h1>做一个能在眼镜里玩的东西</h1>
+        <p class="lead">AIUI Agent 就是“眼镜里的小程序”。你想一个玩法，按官方规则做成 AIX 安装包，再去灵珠平台提交，最后装到乐奇 AI 眼镜上试。</p>
+        <div class="hero-actions">
+          <a class="btn" href="#builder">马上拿模板</a>
+          <a class="btn secondary" href="#six">先看怎么做</a>
+        </div>
+        <div class="hero-proof" aria-label="课程特点">
+          <span class="pill">一看就会</span>
+          <span class="pill">一做就对</span>
+          <span class="pill">眼镜上能跑</span>
+          <span class="pill">复制就能试</span>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <img src="assets/glasses-workshop.png" alt="眼镜里出现小应用界面的教学插画">
+        <div class="quick-panel">
+          <div class="quick-item"><strong>想玩法</strong><span>一句话说清楚。</span></div>
+          <div class="quick-item"><strong>拿模板</strong><span>先让它跑起来。</span></div>
+          <div class="quick-item"><strong>上眼镜</strong><span>戴上试才算数。</span></div>
+        </div>
+      </div>
+    </div>
+
+    <section id="six">
+      <div class="shell">
+        <div class="section-head">
+          <h2>跟着这 6 步走</h2>
+          <p>新手最省心的路线：先准备项目文件夹，再用 Craft 导入、编辑、运行、打包，最后去灵珠提交。</p>
+        </div>
+        <div class="learn-grid">
+          <article class="step-card"><span class="num">1</span><h3>想一个玩法</h3><p>例：扫二维码，眼镜里出现一段小秘密。</p></article>
+          <article class="step-card"><span class="num">2</span><h3>准备项目文件夹</h3><p>至少有 app.json、app.js、package.json 和一个页面文件。</p></article>
+          <article class="step-card"><span class="num">3</span><h3>打开 Craft</h3><p>它像 AIUI 的在线工作台，可以导入、编辑、运行。</p></article>
+          <article class="step-card"><span class="num">4</span><h3>导入并运行</h3><p>导入本地文件夹或 GitHub 子目录，点“运行智能体”看效果。</p></article>
+          <article class="step-card"><span class="num">5</span><h3>打包成 AIX</h3><p>AIX 就像安装包。Craft 可以帮你生成它。</p></article>
+          <article class="step-card"><span class="num">6</span><h3>去灵珠提交</h3><p>填名称、介绍、权限、上传 AIX，再测试唤醒词。</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="craft">
+      <div class="shell">
+        <div class="section-head">
+          <h2>现在推荐用 Craft 做</h2>
+          <p>Craft 是 AIUI 的在线工作台。小白不用先被命令行吓住，先把项目导进去，看得见、改得动、跑得起来。</p>
+        </div>
+        <div class="official-grid">
+          <article class="official-card">
+            <h3>1. 导入项目</h3>
+            <p>点左侧资源管理器里的导入按钮，选择本地文件夹，或者填 GitHub 子目录。</p>
+            <ul>
+              <li>本地文件夹：适合自己电脑里的项目</li>
+              <li>GitHub 子目录：适合照着官方 Sample 改</li>
+              <li>导入后，左边会出现项目文件树</li>
+            </ul>
+          </article>
+          <article class="official-card">
+            <h3>2. 在线编辑</h3>
+            <p>在 Craft 里直接改 app.json、app.js、pages/index/index.ink。</p>
+            <ul>
+              <li>app.json 管名字、版本、权限和页面</li>
+              <li>index.ink 管眼镜上看到的界面</li>
+              <li>先改小地方，保存后立刻跑</li>
+            </ul>
+          </article>
+          <article class="official-card">
+            <h3>3. 运行智能体</h3>
+            <p>点右侧“运行智能体”，选择页面和参数。Craft 会创建 InkView 预览窗口。</p>
+            <ul>
+              <li>先看有没有显示</li>
+              <li>再看按钮和状态有没有变</li>
+              <li>真机能力还要上眼镜测试</li>
+            </ul>
+          </article>
+          <article class="official-card">
+            <h3>4. 打包去发布</h3>
+            <p>确认能跑以后，在 Craft 里生成 AIX，再去灵珠平台创建 AIUI 智能体。</p>
+            <ul>
+              <li>上传 AIX 软件包</li>
+              <li>填写功能介绍和权限</li>
+              <li>提交审核或安装到眼镜测试</li>
+            </ul>
+          </article>
+        </div>
+        <p class="small-note">一句话记住：Craft 负责“做和打包”，灵珠负责“提交和发布”。</p>
+      </div>
+    </section>
+
+    <section id="official">
+      <div class="shell">
+        <div class="section-head">
+          <h2>先认准官方路线</h2>
+          <p>小白最容易迷路。记住：文档看能力，Sample 学写法，Craft 负责制作和打包，灵珠负责提交。</p>
+        </div>
+        <div class="official-grid">
+          <article class="official-card">
+            <h3>1. 开发看 AIUI 文档</h3>
+            <p>这里看页面怎么写、能力怎么调、场景和切片有什么区别。</p>
+            <ul>
+              <li>先看能不能显示界面</li>
+              <li>再看能不能用相机、网络</li>
+              <li>最后再做漂亮的 GUI</li>
+            </ul>
+          </article>
+          <article class="official-card">
+            <h3>2. 写法看 GitHub Sample</h3>
+            <p>Sample 是最小例子。不要一开始写大工程，先抄一个能跑的。</p>
+            <ul>
+              <li>先跑 simple</li>
+              <li>再改名字和文字</li>
+              <li>最后再加自己的功能</li>
+            </ul>
+          </article>
+          <article class="official-card">
+            <h3>3. 制作用 Craft 工作台</h3>
+            <p>把项目文件夹导入 Craft，在里面编辑、运行、预览，再生成 AIX。</p>
+            <ul>
+              <li>导入本地文件夹</li>
+              <li>或者导入 GitHub 子目录</li>
+              <li>点“运行智能体”看界面</li>
+            </ul>
+          </article>
+          <article class="official-card">
+            <h3>4. 提交去灵珠平台</h3>
+            <p>做完以后，到灵珠平台创建 AIUI 智能体，上传 AIX 文件。</p>
+            <ul>
+              <li>类型：场景或切片</li>
+              <li>类别：生活、工作、娱乐、学习</li>
+              <li>权限：只勾真正用到的</li>
+            </ul>
+          </article>
+        </div>
+        <div class="link-grid">
+          <a class="link-card" href="https://js.rokid.com/AIUI" target="_blank" rel="noreferrer">
+            <h3>AIUI 开发文档</h3>
+            <p>看能力、页面、API 和开发规则。</p>
+          </a>
+          <a class="link-card" href="https://js.rokid.com/craft" target="_blank" rel="noreferrer">
+            <h3>Craft 在线工作台</h3>
+            <p>导入项目文件夹或 GitHub 子目录，在线编辑、运行、打包。</p>
+          </a>
+          <a class="link-card" href="https://github.com/jsar-project/AIUI/tree/main/samples/simple" target="_blank" rel="noreferrer">
+            <h3>官方 Sample</h3>
+            <p>从 simple 示例开始，最适合照着改。</p>
+          </a>
+          <a class="link-card" href="https://rizon.rokid.com/space/home" target="_blank" rel="noreferrer">
+            <h3>灵珠平台</h3>
+            <p>创建、编辑、上传 AIUI 智能体。</p>
+          </a>
+          <a class="link-card" href="https://github.com/jsar-project/AIUI" target="_blank" rel="noreferrer">
+            <h3>AIUI GitHub 仓库</h3>
+            <p>看更多示例、目录结构和官方更新。</p>
+          </a>
+          <a class="link-card" href="https://rokid.yuque.com/ub8h5n/hsmrp5/cl87q6uy59ifbh8w?singleDoc#" target="_blank" rel="noreferrer">
+            <h3>AIUI 语雀文档</h3>
+            <p>如果你有访问权限，可以看更完整说明。</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="prep">
+      <div class="shell">
+        <div class="section-head">
+          <h2>如果我是小白，我会先做这 4 件事</h2>
+          <p>不做这一步，后面就会卡在“文件放哪儿”和“为什么导不进去”。</p>
+        </div>
+        <div class="official-grid">
+          <article class="official-card">
+            <h3>1. 先用 Craft，不急着装命令</h3>
+            <p>新手先打开 Craft，把项目文件夹导进去。能在线编辑、运行、打包。</p>
+            <ul>
+              <li>能导入：继续改页面</li>
+              <li>能运行：再上眼镜真机测</li>
+              <li>想本地打包：再看命令行工具</li>
+            </ul>
+          </article>
+          <article class="official-card">
+            <h3>2. 先建这 4 个文件</h3>
+            <p>一个最小项目，不是一段代码就够了。至少要有这些文件。</p>
+            <pre><code>my-first-agent/
+├─ app.json
+├─ app.js
+├─ package.json
+└─ pages/index/index.ink</code></pre>
+          </article>
+          <article class="official-card">
+            <h3>3. 先做“能显示”</h3>
+            <p>第一版别急着加相机、AI、声音。先让眼镜出现一行字。</p>
+            <ul>
+              <li>能打开</li>
+              <li>能单击</li>
+              <li>能双击退出</li>
+            </ul>
+          </article>
+          <article class="official-card">
+            <h3>4. 再去灵珠提交</h3>
+            <p>拿到 AIX 后，再去灵珠平台创建智能体。不要拿半成品去填表。</p>
+            <ul>
+              <li>先在 Craft 里运行成功</li>
+              <li>再上传 AIX</li>
+              <li>最后测试提示词</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="choose">
+      <div class="shell">
+        <div class="section-head">
+          <h2>到底选哪一种？</h2>
+          <p>别纠结。先看你想让用户“玩一会儿”，还是“看一眼”。</p>
+        </div>
+        <div class="choice-layout">
+          <div>
+            <div class="switcher" role="tablist" aria-label="智能体类型">
+              <button class="active" data-kind="scene" type="button">场景：玩一会儿</button>
+              <button data-kind="cut" type="button">切片：看一眼</button>
+            </div>
+            <article class="choice-card active" id="choice-copy">
+              <h3>要打开一个界面，就选场景</h3>
+              <p>比如扫码、小游戏、拍照、计时器，都要在眼镜里待一会儿。</p>
+            </article>
+          </div>
+          <article class="choice-card">
+            <h3>记住这句话</h3>
+            <p id="ruleText">像小程序一样打开来用，选场景。像通知卡片一样看一眼，选切片。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="builder">
+      <div class="shell">
+        <div class="section-head">
+          <h2>填一填，拿到模板</h2>
+          <p>这一步是写代码。下面像填作业一样，先做出第一个能跑的小东西。</p>
+        </div>
+        <div class="builder">
+          <div class="form-grid">
+            <label>
+              给它起个名字
+              <input id="agentName" value="我的第一个小应用" maxlength="16">
+            </label>
+            <label>
+              类型
+              <select id="agentType">
+                <option value="scene">场景：打开一个界面</option>
+                <option value="cut">切片：弹出一张卡片</option>
+              </select>
+            </label>
+            <label>
+              它会做什么
+              <input id="agentIdea" value="单击开始，双击退出">
+            </label>
+            <label>
+              它需要什么能力
+              <select id="agentPerm">
+                <option value="none">什么都不需要</option>
+                <option value="camera-network">要拍照 + 要上网</option>
+                <option value="network">只要上网</option>
+              </select>
+            </label>
+          </div>
+          <div class="output">
+            <div class="snippet-box">
+              <div class="snippet-head"><strong>package.json</strong><button class="copy" data-copy="packageOut" type="button">复制</button></div>
+              <pre><code id="packageOut"></code></pre>
+            </div>
+            <div class="snippet-box">
+              <div class="snippet-head"><strong>app.json</strong><button class="copy" data-copy="appOut" type="button">复制</button></div>
+              <pre><code id="appOut"></code></pre>
+            </div>
+            <div class="snippet-box">
+              <div class="snippet-head"><strong>app.js</strong><button class="copy" data-copy="appjsOut" type="button">复制</button></div>
+              <pre><code id="appjsOut"></code></pre>
+            </div>
+            <div class="snippet-box">
+              <div class="snippet-head"><strong>pages/index/index.ink</strong><button class="copy" data-copy="inkOut" type="button">复制</button></div>
+              <pre><code id="inkOut"></code></pre>
+            </div>
+          </div>
+          <div class="command-strip">
+            <div>推荐：先建文件夹，复制 4 个文件，再打开 Craft 导入这个文件夹。备用：本地运行 <code>npm run pack</code>。</div>
+            <button class="copy" data-copy-text="mkdir -p my-first-agent/pages/index" type="button">复制建目录命令</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="rizon">
+      <div class="shell">
+        <div class="section-head">
+          <h2>灵珠平台怎么填？</h2>
+          <p>Craft 生成 AIX 后，就到灵珠平台创建 AIUI 智能体。照这个填，小白也不慌。</p>
+        </div>
+        <div class="submit-grid">
+          <article class="submit-card">
+            <h3>基础信息</h3>
+            <ul>
+              <li>类型：做完整界面选“场景智能体”</li>
+              <li>名称：短一点，比如“扫一扫”</li>
+              <li>版本：每次更新都加一位，比如 1.0.1</li>
+              <li>类别：看用途选生活、工作、娱乐、学习</li>
+            </ul>
+          </article>
+          <article class="submit-card">
+            <h3>功能介绍</h3>
+            <p>别写长作文。告诉用户：它是什么，能干嘛，什么时候用。</p>
+            <ul>
+              <li>例：戴上眼镜，扫一扫二维码，就能看到文字、网址和眼镜密语。</li>
+              <li>例：适合聚会破冰、展会互动、朋友之间分享小秘密。</li>
+            </ul>
+          </article>
+          <article class="submit-card">
+            <h3>权限依赖</h3>
+            <p>只勾真的用到的。勾太多，用户会紧张，审核也更麻烦。</p>
+            <ul>
+              <li>扫码、拍照：勾摄像头</li>
+              <li>访问接口：勾网络</li>
+              <li>没用语音，就别勾麦克风和语音识别</li>
+            </ul>
+          </article>
+          <article class="submit-card">
+            <h3>程序包和测试词</h3>
+            <ul>
+              <li>上传刚打包出来的 .aix 文件</li>
+              <li>md5 通常平台会自动算</li>
+              <li>测试词写自然一点：打开扫一扫，帮我识别这个二维码</li>
+            </ul>
+          </article>
+        </div>
+        <p class="small-note">小提醒：如果你上传后发现眼镜还是旧版本，先检查版本号、AIX 文件名、包内 app.json，很多“没更新”其实是装了旧包。</p>
+      </div>
+    </section>
+
+    <section id="pitfalls">
+      <div class="shell">
+        <div class="section-head">
+          <h2>这 4 个坑，先躲开</h2>
+          <p>都是眼镜上真实遇到过的问题。先知道，就少折腾。</p>
+        </div>
+        <div class="pitfall-grid">
+          <article class="pitfall-card"><span class="tag">交互</span><h3>镜腿不是鼠标</h3><p>眼镜腿单击像按 Enter，双击像按 Backspace。</p></article>
+          <article class="pitfall-card"><span class="tag">退出</span><h3>别一下子退出</h3><p>双击先问“确定吗？”，再双击才退出。这样不容易误关。</p></article>
+          <article class="pitfall-card"><span class="tag">界面</span><h3>少写花活</h3><p>页面代码越简单越稳。先别写太复杂的判断和样式。</p></article>
+          <article class="pitfall-card"><span class="tag ok">能力</span><h3>先做稳的</h3><p>相机、图片、上网比较好用。声音、视频、语音要先真机试。</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="ship">
+      <div class="shell">
+        <div class="section-head">
+          <h2>装上眼镜前，检查一下</h2>
+          <p>先别急着加新功能。把这 4 件事做好，就很稳。</p>
+        </div>
+        <div class="test-flow">
+          <article class="test-card"><h3>能看见</h3><p>打开后有标题，有内容，字够大，不被挡住。</p></article>
+          <article class="test-card"><h3>能点动</h3><p>单击后有反应。不要点一下变成点很多下。</p></article>
+          <article class="test-card"><h3>能说清失败</h3><p>如果网络坏了，要告诉用户“没连上，请重试”。</p></article>
+          <article class="test-card"><h3>能退出</h3><p>双击先确认，再双击退出。别把人关在页面里。</p></article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="shell footer-inner">
+      <strong>手搓 AIUI Agent</strong>
+      <span>给第一次做 AI 眼镜小应用的人</span>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast">已复制</div>
+
+  <script>
+    const state = {
+      scene: {
+        title: '要打开一个界面，就选场景',
+        text: '比如扫码、小游戏、拍照、计时器，都要在眼镜里待一会儿。',
+        rule: '像小程序一样打开来用，选场景。像通知卡片一样看一眼，选切片。'
+      },
+      cut: {
+        title: '只想看一眼，就选切片',
+        text: '比如天气、股票、提醒、问答结果，出来一张小卡片就够了。',
+        rule: '切片就像一张提示卡。它不适合相机、游戏这种要一直玩的东西。'
+      }
+    };
+
+    const els = {
+      name: document.getElementById('agentName'),
+      type: document.getElementById('agentType'),
+      idea: document.getElementById('agentIdea'),
+      perm: document.getElementById('agentPerm'),
+      packageOut: document.getElementById('packageOut'),
+      appOut: document.getElementById('appOut'),
+      appjsOut: document.getElementById('appjsOut'),
+      inkOut: document.getElementById('inkOut'),
+      toast: document.getElementById('toast'),
+      choiceCopy: document.getElementById('choice-copy'),
+      ruleText: document.getElementById('ruleText')
+    };
+
+    function permissions(value) {
+      if (value === 'camera-network') return ['camera', 'network'];
+      if (value === 'network') return ['network'];
+      return [];
+    }
+
+    function buildAppJson() {
+      const name = els.name.value.trim() || '我的 Agent';
+      const type = els.type.value;
+      const perms = permissions(els.perm.value);
+      return JSON.stringify({
+        name,
+        version: '0.1.0',
+        type,
+        category: 'life',
+        description: els.idea.value.trim() || '我的第一个 AI 眼镜小应用',
+        permissions: perms,
+        voiceCommands: [name, '打开' + name, '退出'],
+        pages: ['pages/index/index'],
+        window: {
+          backgroundColor: '#050807',
+          navigationBarTitleText: name
+        }
+      }, null, 2);
+    }
+
+    function slugName(value) {
+      return String(value || 'my-first-agent')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'my-first-agent';
+    }
+
+    function buildPackageJson() {
+      const name = slugName(els.name.value);
+      return JSON.stringify({
+        name,
+        version: '0.1.0',
+        type: 'module',
+        private: true,
+        scripts: {
+          dev: 'aiui-open . -i pages/index/index',
+          pack: `aiui-aix pack --optimize -o ${name}-0.1.0.aix .`
+        }
+      }, null, 2);
+    }
+
+    function buildAppJs() {
+      const name = els.name.value.trim() || '我的第一个小应用';
+      return `export default {
+  onLaunch() {
+    console.log('${name} launch');
+  }
+};`;
+    }
+
+    function buildInk() {
+      const name = els.name.value.trim() || '我的 Agent';
+      const idea = els.idea.value.trim() || '单击开始，双击退出';
+      return `<script setup>
+import wx from 'wx';
+
+Page({
+  data: {
+    title: '${name}',
+    message: '${idea}',
+    exitConfirm: false
+  },
+
+  onKeyDown(event) {
+    const key = String(event && (event.key || event.code || event.keyCode) || '');
+    if (key === 'Backspace' || key === '8') {
+      if (this.data.exitConfirm) return this.exitAgent();
+      this.setData({ exitConfirm: true, message: '再次双击退出，单击取消' });
+      return;
+    }
+    if (key === 'Enter' || key === '13') {
+      if (this.data.exitConfirm) {
+        this.setData({ exitConfirm: false, message: '${idea}' });
+        return;
+      }
+      this.setData({ message: '你已经完成第一次交互！' });
+    }
+  },
+
+  exitAgent() {
+    try { wx.exitMiniProgram({}); } catch (err) {}
+    setTimeout(() => {
+      try { wx.navigateBack({ delta: 1 }); } catch (err) {}
+    }, 300);
+  }
+});
+<\/script>
+
+<page>
+  <view class="page">
+    <text class="title">{{title}}</text>
+    <text class="message">{{message}}</text>
+    <text class="hint">单击互动 · 双击退出</text>
+  </view>
+</page>
+
+<style>
+.page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 18px;
+  box-sizing: border-box;
+  background: transparent;
+  flex-direction: column;
+  justify-content: center;
+}
+.title {
+  color: #40ff5e;
+  font-size: 30px;
+  line-height: 38px;
+  font-weight: 900;
+}
+.message {
+  color: #ffffff;
+  font-size: 24px;
+  line-height: 34px;
+  font-weight: 800;
+  margin-top: 18px;
+}
+.hint {
+  color: #9fffae;
+  font-size: 13px;
+  line-height: 18px;
+  margin-top: 24px;
+}
+</style>`;
+    }
+
+    function render() {
+      els.packageOut.textContent = buildPackageJson();
+      els.appOut.textContent = buildAppJson();
+      els.appjsOut.textContent = buildAppJs();
+      els.inkOut.textContent = buildInk();
+    }
+
+    function showToast(text) {
+      els.toast.textContent = text;
+      els.toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => els.toast.classList.remove('show'), 1400);
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('已复制');
+      } catch (err) {
+        showToast('复制失败，请手动选择');
+      }
+    }
+
+    document.querySelectorAll('.switcher button').forEach((button) => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.switcher button').forEach((item) => item.classList.remove('active'));
+        button.classList.add('active');
+        const data = state[button.dataset.kind];
+        els.choiceCopy.querySelector('h3').textContent = data.title;
+        els.choiceCopy.querySelector('p').textContent = data.text;
+        els.ruleText.textContent = data.rule;
+        els.type.value = button.dataset.kind;
+        render();
+      });
+    });
+
+    document.querySelectorAll('[data-copy]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const target = document.getElementById(button.dataset.copy);
+        copyText(target.textContent);
+      });
+    });
+
+    document.querySelectorAll('[data-copy-text]').forEach((button) => {
+      button.addEventListener('click', () => copyText(button.dataset.copyText));
+    });
+
+    [els.name, els.type, els.idea, els.perm].forEach((input) => {
+      input.addEventListener('input', render);
+      input.addEventListener('change', render);
+    });
+
+    render();
+  </script>
+</body>
+</html>

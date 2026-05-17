@@ -1,0 +1,23 @@
+.DS_Store
+node_modules/
+dist/
+build/
+coverage/
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# AIUI build outputs
+*.aix
+
+# Logs and caches
+*.log
+.cache/
+.tmp/
+
+# Editor files
+.vscode/
+.idea/
+
