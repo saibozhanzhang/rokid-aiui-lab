@@ -23,7 +23,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.30';
+const APP_VERSION = '1.0.31';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -882,6 +882,7 @@ export default {
     a2uiCommands: '',
     showChrome: false,
     showFooter: false,
+    showTopbar: true,
     footerHintText: '单击扫描 · 双击退出',
     exitConfirm: false,
     audioHintText: '',
@@ -1012,8 +1013,30 @@ export default {
       clearTimeout(this.confirmCancelTimer);
       this.confirmCancelTimer = null;
     }
+    this.stopDecodeAnimation();
+    if (!this.exitUiSnapshot) {
+      this.exitUiSnapshot = {
+        displayMode: this.data.displayMode,
+        showChrome: this.data.showChrome,
+        showFooter: this.data.showFooter,
+        showTopbar: this.data.showTopbar,
+        showCamera: this.data.showCamera,
+        showTextLayer: this.data.showTextLayer,
+        mediaMode: this.data.mediaMode,
+        mediaUrl: this.data.mediaUrl,
+        busy: this.data.busy,
+        autoExitText: this.data.autoExitText
+      };
+    }
     this.setData({
       exitConfirm: true,
+      displayMode: 'exit-clear',
+      showChrome: false,
+      showFooter: false,
+      showTopbar: false,
+      showCamera: false,
+      showTextLayer: false,
+      busy: false,
       autoExitText: '双击两次退出'
     });
   },
@@ -1025,10 +1048,13 @@ export default {
       clearTimeout(this.confirmCancelTimer);
       this.confirmCancelTimer = null;
     }
-    this.setData({
+    const snapshot = this.exitUiSnapshot || {};
+    this.exitUiSnapshot = null;
+    this.setData(Object.assign({
       exitConfirm: false,
+      showTopbar: true,
       autoExitText: '双击退出'
-    });
+    }, snapshot));
   },
 
   onVoiceWakeup() {
@@ -1224,6 +1250,19 @@ export default {
       const photoPromise = this.takePhoto();
       await this.showDecodingState();
       const photo = await photoPromise;
+      if (this.data.exitConfirm || this.exiting) {
+        this.stopDecodeAnimation();
+        this.setData({
+          busy: false,
+          displayMode: 'exit-clear',
+          showCamera: false,
+          showTextLayer: false,
+          showChrome: false,
+          showFooter: false,
+          showTopbar: false
+        });
+        return;
+      }
       this.setData({
         showCamera: false,
         showTextLayer: true,
@@ -1241,9 +1280,34 @@ export default {
         const payload = this.buildPayload(photo);
         result = await this.requestDecode(payload);
       }
+      if (this.data.exitConfirm || this.exiting) {
+        this.stopDecodeAnimation();
+        this.setData({
+          busy: false,
+          displayMode: 'exit-clear',
+          showCamera: false,
+          showTextLayer: false,
+          showChrome: false,
+          showFooter: false,
+          showTopbar: false
+        });
+        return;
+      }
       this.renderResult(result);
     } catch (err) {
       this.stopDecodeAnimation();
+      if (this.data.exitConfirm || this.exiting) {
+        this.setData({
+          busy: false,
+          displayMode: 'exit-clear',
+          showCamera: false,
+          showTextLayer: false,
+          showChrome: false,
+          showFooter: false,
+          showTopbar: false
+        });
+        return;
+      }
       this.playEffect('fail');
       const perfText = this.scanPerfText();
       this.setData({
@@ -1852,6 +1916,18 @@ export default {
 
   renderResult(result) {
     this.stopDecodeAnimation();
+    if (this.data.exitConfirm || this.exiting) {
+      this.setData({
+        busy: false,
+        displayMode: 'exit-clear',
+        showCamera: false,
+        showTextLayer: false,
+        showChrome: false,
+        showFooter: false,
+        showTopbar: false
+      });
+      return;
+    }
     const found = !!(result && result.found);
     this.playEffect(found ? 'success' : 'fail');
     const text = found ? String(result.text || '') : '没有识别到二维码。';
@@ -2072,6 +2148,11 @@ export default {
     this.setData({
       busy: false,
       exitConfirm: false,
+      showTopbar: false,
+      showChrome: false,
+      showFooter: false,
+      displayMode: 'exit-clear',
+      showCamera: false,
       showTextLayer: false,
       autoExitText: '正在退出'
     });
@@ -2084,7 +2165,7 @@ export default {
 
 <page>
   <view class="page" bindtap="onRootTap">
-    <view class="topbar">
+    <view class="topbar" ink:if="{{showTopbar}}">
       <text class="brand">扫一扫</text>
       <text class="timer">{{autoExitText}}</text>
     </view>
