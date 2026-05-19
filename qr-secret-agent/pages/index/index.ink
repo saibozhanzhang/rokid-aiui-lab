@@ -23,7 +23,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.29';
+const APP_VERSION = '1.0.30';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -2567,7 +2567,7 @@ export default {
   top: 0;
   left: 0;
   z-index: 100;
-  background-color: #020403;
+  background-color: transparent;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -2580,7 +2580,7 @@ export default {
   box-sizing: border-box;
   border-radius: 18px;
   border: 2px solid #40ff5e;
-  background-color: #061008;
+  background-color: transparent;
   flex-direction: column;
   align-items: center;
   justify-content: center;
