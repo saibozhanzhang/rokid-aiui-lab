@@ -23,7 +23,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.33';
+const APP_VERSION = '1.0.34';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -77,7 +77,7 @@ const EFFECT_AUDIO = {
   success: '../../assets/success.mp3',
   fail: '../../assets/fail.mp3'
 };
-const EFFECT_VOLUME = 0.45;
+const EFFECT_VOLUME = 0.18;
 const EFFECT_POOL_SIZE = 2;
 const EFFECT_COOLDOWN_MS = 120;
 
