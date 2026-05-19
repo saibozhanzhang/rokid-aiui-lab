@@ -23,7 +23,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.27';
+const APP_VERSION = '1.0.28';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -77,6 +77,8 @@ const EFFECT_AUDIO = {
   success: '../../assets/success.mp3',
   fail: '../../assets/fail.mp3'
 };
+const EFFECT_POOL_SIZE = 2;
+const EFFECT_COOLDOWN_MS = 120;
 
 function safeString(value) {
   if (value === undefined) return 'undefined';
@@ -1074,49 +1076,65 @@ export default {
   },
 
   setupEffectAudio() {
-    this.effectPlayers = {};
-    if (typeof AudioPlayer === 'undefined') {
-      this.effectAudioReady = false;
-      return;
-    }
-    Object.keys(EFFECT_AUDIO).forEach((key) => {
-      try {
-        const player = new AudioPlayer();
-        player.src = EFFECT_AUDIO[key];
-        player.autoplay = false;
-        player.loop = false;
-        if ('volume' in player) player.volume = 1.0;
-        this.effectPlayers[key] = player;
-      } catch (err) {}
-    });
-    this.effectAudioReady = !!(this.effectPlayers && (this.effectPlayers.success || this.effectPlayers.fail));
+    this.effectPools = {};
+    this.effectLastFireAt = {};
+    this.effectAudioReady = typeof AudioPlayer !== 'undefined';
   },
 
   destroyEffectAudio() {
-    if (!this.effectPlayers) return;
-    Object.keys(this.effectPlayers).forEach((key) => {
-      const player = this.effectPlayers[key];
-      try {
-        if (player && player.pause) player.pause();
-      } catch (err) {}
-      try {
-        if (player && player.destroy) player.destroy();
-      } catch (err2) {}
+    if (!this.effectPools) return;
+    Object.keys(this.effectPools).forEach((key) => {
+      const entry = this.effectPools[key];
+      const players = entry && entry.players ? entry.players : [];
+      players.forEach((player) => {
+        try {
+          if (player && player.pause) player.pause();
+        } catch (err) {}
+        try {
+          if (player && player.destroy) player.destroy();
+        } catch (err2) {}
+      });
     });
-    this.effectPlayers = null;
+    this.effectPools = null;
+    this.effectLastFireAt = null;
     this.effectAudioReady = false;
   },
 
   playEffect(name) {
-    const player = this.effectPlayers && this.effectPlayers[name];
-    if (!player) return;
-    try {
-      if (player.seek) player.seek(0);
-      player.play();
-    } catch (err) {
+    const src = EFFECT_AUDIO[name];
+    if (!src || typeof AudioPlayer === 'undefined') return;
+    const now = Date.now();
+    const lastAt = this.effectLastFireAt && this.effectLastFireAt[name] ? this.effectLastFireAt[name] : 0;
+    if (now - lastAt < EFFECT_COOLDOWN_MS) return;
+    if (!this.effectPools) this.effectPools = {};
+    if (!this.effectLastFireAt) this.effectLastFireAt = {};
+    this.effectLastFireAt[name] = now;
+    let entry = this.effectPools[name];
+    if (!entry) {
+      entry = { players: new Array(EFFECT_POOL_SIZE).fill(null), index: 0 };
+      this.effectPools[name] = entry;
+    }
+    const slot = entry.index;
+    entry.index = (entry.index + 1) % EFFECT_POOL_SIZE;
+    const oldPlayer = entry.players[slot];
+    if (oldPlayer) {
       try {
-        player.play();
+        if (oldPlayer.pause) oldPlayer.pause();
+      } catch (err) {}
+      try {
+        if (oldPlayer.destroy) oldPlayer.destroy();
       } catch (err2) {}
+    }
+    try {
+      const player = new AudioPlayer();
+      player.src = src;
+      player.autoplay = false;
+      player.loop = false;
+      if ('volume' in player) player.volume = 1.0;
+      player.play();
+      entry.players[slot] = player;
+    } catch (err) {
+      entry.players[slot] = null;
     }
   },
 
@@ -2142,9 +2160,9 @@ export default {
     <view class="exit-overlay" ink:if="{{exitConfirm}}">
       <view class="exit-dialog">
         <view class="exit-dialog-body">
-          <text class="exit-title">确认退出？</text>
-          <text class="exit-copy">先双击一次</text>
-          <text class="exit-copy">再双击一次退出</text>
+          <text class="exit-title">确认退出</text>
+          <text class="exit-copy">请再双击一次</text>
+          <text class="exit-copy">再双击一次完成退出</text>
           <text class="exit-copy">单击取消</text>
         </view>
       </view>
@@ -2556,13 +2574,13 @@ export default {
 }
 
 .exit-dialog {
-  width: 78%;
-  height: 158px;
-  padding: 16px 18px;
+  width: 76%;
+  height: 172px;
+  padding: 18px 20px;
   box-sizing: border-box;
-  border-radius: 16px;
+  border-radius: 18px;
   border: 2px solid #40ff5e;
-  background-color: #07110a;
+  background-color: #061008;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -2577,8 +2595,8 @@ export default {
 
 .exit-title {
   color: #ffffff;
-  font-size: 25px;
-  line-height: 32px;
+  font-size: 28px;
+  line-height: 36px;
   font-weight: 800;
   width: 100%;
   text-align: center;
@@ -2586,9 +2604,9 @@ export default {
 
 .exit-copy {
   color: #9fffae;
-  font-size: 19px;
-  line-height: 26px;
-  margin-top: 6px;
+  font-size: 20px;
+  line-height: 28px;
+  margin-top: 5px;
   width: 100%;
   text-align: center;
 }
