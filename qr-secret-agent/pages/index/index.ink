@@ -23,7 +23,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.26';
+const APP_VERSION = '1.0.27';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -73,6 +73,10 @@ const PHOTO_CAPTURE_PROFILES = [
 ];
 const BRAND_FOOTNOTE = '只显示在你的乐奇 AI 眼镜里，一起乐在奇中，奇乐无穷！';
 const COPYRIGHT_TEXT = '© 赛博站长';
+const EFFECT_AUDIO = {
+  success: '../../assets/success.mp3',
+  fail: '../../assets/fail.mp3'
+};
 
 function safeString(value) {
   if (value === undefined) return 'undefined';
@@ -903,6 +907,7 @@ export default {
     this.barcodeDetector = null;
     this.currentAudioUrl = '';
     this.exiting = false;
+    this.setupEffectAudio();
     this.attachRuntimeAdapters();
     this.setData({ endpointText: this.decodeProvider === 'cloud' && this.endpoint ? this.endpoint : 'Rokid BarcodeDetector' });
   },
@@ -911,6 +916,7 @@ export default {
     this.detachRuntimeAdapters();
     this.clearTimers();
     this.stopAudio();
+    this.destroyEffectAudio();
   },
 
   onRootTap() {
@@ -1067,6 +1073,53 @@ export default {
     this.runtimeDisposers = [];
   },
 
+  setupEffectAudio() {
+    this.effectPlayers = {};
+    if (typeof AudioPlayer === 'undefined') {
+      this.effectAudioReady = false;
+      return;
+    }
+    Object.keys(EFFECT_AUDIO).forEach((key) => {
+      try {
+        const player = new AudioPlayer();
+        player.src = EFFECT_AUDIO[key];
+        player.autoplay = false;
+        player.loop = false;
+        if ('volume' in player) player.volume = 1.0;
+        this.effectPlayers[key] = player;
+      } catch (err) {}
+    });
+    this.effectAudioReady = !!(this.effectPlayers && (this.effectPlayers.success || this.effectPlayers.fail));
+  },
+
+  destroyEffectAudio() {
+    if (!this.effectPlayers) return;
+    Object.keys(this.effectPlayers).forEach((key) => {
+      const player = this.effectPlayers[key];
+      try {
+        if (player && player.pause) player.pause();
+      } catch (err) {}
+      try {
+        if (player && player.destroy) player.destroy();
+      } catch (err2) {}
+    });
+    this.effectPlayers = null;
+    this.effectAudioReady = false;
+  },
+
+  playEffect(name) {
+    const player = this.effectPlayers && this.effectPlayers[name];
+    if (!player) return;
+    try {
+      if (player.seek) player.seek(0);
+      player.play();
+    } catch (err) {
+      try {
+        player.play();
+      } catch (err2) {}
+    }
+  },
+
   clearTimers() {
     if (this.autoExitTimer) {
       clearInterval(this.autoExitTimer);
@@ -1173,6 +1226,7 @@ export default {
       this.renderResult(result);
     } catch (err) {
       this.stopDecodeAnimation();
+      this.playEffect('fail');
       const perfText = this.scanPerfText();
       this.setData({
         busy: false,
@@ -1781,6 +1835,7 @@ export default {
   renderResult(result) {
     this.stopDecodeAnimation();
     const found = !!(result && result.found);
+    this.playEffect(found ? 'success' : 'fail');
     const text = found ? String(result.text || '') : '没有识别到二维码。';
     const detail = resultDetail(result);
     const label = typeLabel(result && result.type);
@@ -2067,15 +2122,6 @@ export default {
           </view>
         </view>
       </view>
-      <view class="exit-shade" ink:if="{{exitConfirm}}"></view>
-      <view class="exit-dialog" ink:if="{{exitConfirm}}">
-        <view class="exit-dialog-body">
-          <text class="exit-title">确认退出？</text>
-          <text class="exit-copy">先双击一次</text>
-          <text class="exit-copy">再双击一次退出</text>
-          <text class="exit-copy">单击取消</text>
-        </view>
-      </view>
     </view>
     <view class="statusbar" ink:if="{{showChrome}}">
       <text class="status">{{statusText}}</text>
@@ -2093,6 +2139,16 @@ export default {
       <text class="footer-hint">{{footerHintText}}</text>
       <text class="copyright">{{copyrightText}}</text>
     </view>
+    <view class="exit-overlay" ink:if="{{exitConfirm}}">
+      <view class="exit-dialog">
+        <view class="exit-dialog-body">
+          <text class="exit-title">确认退出？</text>
+          <text class="exit-copy">先双击一次</text>
+          <text class="exit-copy">再双击一次退出</text>
+          <text class="exit-copy">单击取消</text>
+        </view>
+      </view>
+    </view>
   </view>
 </page>
 
@@ -2105,6 +2161,8 @@ export default {
   background: transparent;
   color: #eaffea;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
 }
 
 .topbar {
@@ -2484,14 +2542,17 @@ export default {
   margin-top: 10px;
 }
 
-.exit-shade {
+.exit-overlay {
   width: 100%;
-  height: 274px;
+  height: 100vh;
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 70;
+  z-index: 100;
   background-color: #020403;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .exit-dialog {
@@ -2505,10 +2566,6 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  position: absolute;
-  top: 58px;
-  left: 11%;
-  z-index: 80;
 }
 
 .exit-dialog-body {

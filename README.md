@@ -20,7 +20,7 @@
 - Wi-Fi、名片、电话、邮箱、短信、位置、日程：整理成 GUI 卡片
 - 眼镜密语：只有戴眼镜的人能看到
 
-当前版本：`1.0.26`
+当前版本：`1.0.27`
 
 主要技术点：
 
@@ -28,6 +28,7 @@
 - `wx.takePhoto`
 - Rokid `BarcodeDetector`
 - WebP 照片解码
+- 本地 AudioPlayer 成功 / 失败音效
 - A2UI / native `.ink` 混合 GUI
 - 镜腿单击扫描、双击退出
 
@@ -109,4 +110,3 @@ npm run pack
 ## 作者
 
 赛博站长
-
