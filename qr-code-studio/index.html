@@ -122,63 +122,8 @@
       line-height: 1.5;
     }
 
-    .presets {
-      padding: 14px 18px 18px;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .preset {
-      display: grid;
-      grid-template-columns: 58px 1fr;
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fbfdfb;
-      text-align: left;
-      min-height: 78px;
-    }
-
-    .preset.active {
-      border-color: var(--green);
-      background: #effbf2;
-    }
-
-    .pixel-mini {
-      width: 58px;
-      height: 58px;
-      border-radius: 12px;
-      background: #061009;
-      color: var(--glass-green);
-      display: grid;
-      place-items: center;
-      white-space: pre;
-      font-family: "SF Mono", Menlo, Consolas, monospace;
-      font-size: 8px;
-      line-height: 8px;
-      overflow: hidden;
-    }
-
-    .preset-name {
-      display: block;
-      font-size: 15px;
-      font-weight: 800;
-      color: var(--ink);
-    }
-
-    .preset-copy {
-      display: block;
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-    }
-
     .tools {
-      margin-top: 18px;
+      margin-top: 0;
     }
 
     .ideas {
@@ -462,14 +407,6 @@
       word-break: break-word;
     }
 
-    .glass-message.pixel {
-      color: var(--glass-green);
-      font-family: "SF Mono", Menlo, Consolas, monospace;
-      font-size: clamp(14px, 2.1vw, 22px);
-      line-height: 1.04;
-      letter-spacing: 0;
-    }
-
     .glass-image {
       width: 100%;
       max-height: 210px;
@@ -530,7 +467,6 @@
         justify-self: start;
       }
 
-      .presets,
       .field-row,
       .idea-grid {
         grid-template-columns: 1fr;
@@ -547,21 +483,13 @@
     <header class="top">
       <div>
         <h1 class="title">扫一扫二维码创作台</h1>
-        <p class="subtitle">给乐奇 AI 眼镜准备一枚会变魔法的二维码。左边选内容，右边马上看到二维码和眼镜端预览。</p>
+        <p class="subtitle">给乐奇 AI 眼镜准备一枚能被「扫一扫」读懂的二维码。填好内容，马上看到二维码和眼镜端预览。</p>
       </div>
       <div class="badge">扫一扫兼容 · A2UI 友好格式</div>
     </header>
 
     <section class="layout">
       <div>
-        <section class="panel">
-          <div class="panel-head">
-            <h2 class="panel-title">日常像素密语</h2>
-            <p class="panel-note">这些二维码扫出来就是眼镜里的小图案，很适合生日、聚会、约饭和悄悄传话。</p>
-          </div>
-          <div class="presets" id="presets"></div>
-        </section>
-
         <section class="panel tools">
           <div class="panel-head">
             <h2 class="panel-title">自己生成</h2>
@@ -576,7 +504,7 @@
           <div class="idea-grid">
             <div class="idea"><strong>家里 Wi-Fi 贴</strong><span>朋友来家里，戴眼镜一扫就知道网络名和密码。</span></div>
             <div class="idea"><strong>聚会暗号</strong><span>吧台、餐桌、生日卡片里藏一句只有眼镜能看的话。</span></div>
-            <div class="idea"><strong>摊位小彩蛋</strong><span>二维码贴在杯子、菜单、展台上，扫到小图案或一句提示。</span></div>
+            <div class="idea"><strong>摊位信息牌</strong><span>二维码贴在杯子、菜单、展台上，扫到说明、图片或联系方式。</span></div>
             <div class="idea"><strong>交换名片</strong><span>把电话、邮箱、身份做成清爽名片卡，一扫就能看懂。</span></div>
           </div>
         </section>
@@ -607,15 +535,15 @@
           <div class="glass" id="glassPreview">
             <div class="glass-head">
               <span>乐奇 AI 眼镜预览</span>
-              <span class="glass-type" id="previewType">密语</span>
+              <span class="glass-type" id="previewType">Wi-Fi</span>
             </div>
             <div class="glass-body">
-              <h3 class="glass-title" id="previewTitle">生日快乐</h3>
-              <p class="glass-subtitle" id="previewSubtitle">眼镜专属</p>
+              <h3 class="glass-title" id="previewTitle">CyberStation-5G</h3>
+              <p class="glass-subtitle" id="previewSubtitle">WPA</p>
               <img class="glass-image" id="previewImage" alt="">
-              <pre class="glass-message pixel" id="previewBody"></pre>
+              <pre class="glass-message" id="previewBody"></pre>
             </div>
-            <div class="glass-foot" id="previewFoot">只显示在你的乐奇 AI 眼镜里，一起乐在奇中，奇乐无穷！</div>
+            <div class="glass-foot" id="previewFoot">请在手机或路由器设置里手动连接</div>
           </div>
         </div>
       </section>
@@ -625,104 +553,7 @@
   <script>
     const BRAND_FOOT = '只显示在你的乐奇 AI 眼镜里，一起乐在奇中，奇乐无穷！';
 
-    const pixelPresets = [
-      {
-        id: 'cake',
-        name: '生日蛋糕',
-        copy: '生日趴一亮相就懂',
-        title: '生日快乐',
-        body: '  ██  \n  ██  \n██████\n█░░░░█\n██████',
-      },
-      {
-        id: 'firework',
-        name: '烟花',
-        copy: '祝贺、开场、气氛组',
-        title: '今晚放光',
-        body: '░  █  ░\n█░ █ ░█\n ░███░ \n█░ █ ░█\n░  █  ░',
-      },
-      {
-        id: 'drumstick',
-        name: '鸡腿',
-        copy: '约饭暗号，一扫就饿',
-        title: '加个鸡腿',
-        body: ' ███  \n█████ \n ███  \n  ██  \n ██ ██',
-      },
-      {
-        id: 'thumb',
-        name: '大拇指',
-        copy: '点赞、认可、干得漂亮',
-        title: '干得漂亮',
-        body: '  ██  \n  ██  \n█████ \n██████\n█ █ █ ',
-      },
-      {
-        id: 'heart',
-        name: '小心心',
-        copy: '低调表达喜欢',
-        title: '收到心意',
-        body: ' ██ ██ \n███████\n███████\n █████ \n  ███  \n   █   ',
-      },
-      {
-        id: 'coffee',
-        name: '咖啡',
-        copy: '开工、提神、会议前',
-        title: '咖啡续命',
-        body: ' ░░░  \n█████ \n█   █░\n█   █░\n█████ \n ▀▀▀  ',
-      },
-      {
-        id: 'beer',
-        name: '干杯',
-        copy: '聚会碰杯专用',
-        title: '今晚干杯',
-        body: '█  █  \n█  █  \n████  \n█████ \n ███  \n ███  ',
-      },
-      {
-        id: 'ok',
-        name: '已搞定',
-        copy: '项目完成，默契确认',
-        title: '稳了',
-        body: '    ██\n   ██ \n█ ██  \n███   \n██    ',
-      },
-      {
-        id: 'gift',
-        name: '小礼物',
-        copy: '生日、纪念日、惊喜',
-        title: '给你礼物',
-        body: ' ████ \n██████\n  ██  \n██████\n█ ██ █\n██████',
-      },
-      {
-        id: 'smile',
-        name: '笑一下',
-        copy: '别太严肃，开心点',
-        title: '笑一下',
-        body: '█    █\n      \n  ██  \n█    █\n ████ ',
-      },
-      {
-        id: 'star',
-        name: '小星星',
-        copy: '给今天一点高光',
-        title: '今天发光',
-        body: '  █  \n ███ \n█████\n ███ \n█ █ █',
-      },
-      {
-        id: 'umbrella',
-        name: '带伞',
-        copy: '天气提醒，不费口舌',
-        title: '记得带伞',
-        body: ' ████ \n██████\n  ██  \n  ██  \n ██   ',
-      },
-    ];
-
     const builders = {
-      pixel: {
-        label: '像素密语',
-        defaults: { title: '生日快乐', body: pixelPresets[0].body },
-        fields: [
-          { key: 'title', label: '标题', type: 'text', placeholder: '生日快乐' },
-          { key: 'body', label: '像素图案或短句', type: 'textarea', placeholder: '用 █ ░ 和换行拼一个小图案' },
-        ],
-        payload: (v) => 'GLASS-SECRET:' + JSON.stringify({ title: v.title || '眼镜密语', body: v.body || '' }),
-        preview: (v) => ({ type: '密语', title: v.title || '眼镜密语', subtitle: '眼镜专属', body: v.body || '', pixel: true, foot: BRAND_FOOT }),
-      },
       wifi: {
         label: 'Wi-Fi',
         defaults: { ssid: 'CyberStation-5G', password: 'happy8888', auth: 'WPA', hidden: false },
@@ -743,14 +574,14 @@
         preview: (v) => ({ type: 'Wi-Fi', title: v.ssid || 'Wi-Fi 网络', subtitle: v.auth === 'nopass' ? '免密码' : (v.auth || 'WPA'), body: v.password ? '密码：' + v.password : '没有密码字段', foot: '请在手机或路由器设置里手动连接' }),
       },
       text: {
-        label: '文字密语',
+        label: '文字卡片',
         defaults: { title: '今晚暗号', body: '到吧台说：青柠不要冰' },
         fields: [
           { key: 'title', label: '标题', type: 'text' },
           { key: 'body', label: '正文', type: 'textarea' },
         ],
-        payload: (v) => 'GLASS-SECRET:' + JSON.stringify({ title: v.title || '眼镜密语', body: v.body || '' }),
-        preview: (v) => ({ type: '密语', title: v.title || '眼镜密语', subtitle: '眼镜专属', body: v.body || '', foot: BRAND_FOOT }),
+        payload: (v) => 'GLASS-SECRET:' + JSON.stringify({ title: v.title || '眼镜卡片', body: v.body || '' }),
+        preview: (v) => ({ type: '文字', title: v.title || '眼镜卡片', subtitle: '文字卡片', body: v.body || '', foot: BRAND_FOOT }),
       },
       image: {
         label: '图片',
@@ -834,13 +665,11 @@
       },
     };
 
-    let currentKind = 'pixel';
-    let values = structuredClone(builders.pixel.defaults);
-    let activePresetId = 'cake';
+    let currentKind = 'wifi';
+    let values = structuredClone(builders.wifi.defaults);
     let currentSvg = '';
 
     const el = {
-      presets: document.getElementById('presets'),
       tabs: document.getElementById('tabs'),
       form: document.getElementById('form'),
       qrBox: document.getElementById('qrBox'),
@@ -861,7 +690,6 @@
     };
 
     function init() {
-      renderPresets();
       renderTabs();
       renderForm();
       updateAll();
@@ -873,23 +701,8 @@
       el.resetCurrent.addEventListener('click', resetCurrent);
     }
 
-    function renderPresets() {
-      el.presets.innerHTML = pixelPresets.map((preset) => `
-        <button class="preset ${preset.id === activePresetId ? 'active' : ''}" type="button" data-preset="${preset.id}">
-          <span class="pixel-mini">${escapeHtml(preset.body)}</span>
-          <span>
-            <span class="preset-name">${escapeHtml(preset.name)}</span>
-            <span class="preset-copy">${escapeHtml(preset.copy)}</span>
-          </span>
-        </button>
-      `).join('');
-      el.presets.querySelectorAll('[data-preset]').forEach((button) => {
-        button.addEventListener('click', () => applyPreset(button.dataset.preset));
-      });
-    }
-
     function renderTabs() {
-      const order = ['pixel', 'wifi', 'text', 'image', 'url', 'contact', 'phone', 'sms', 'email', 'geo', 'event'];
+      const order = ['wifi', 'text', 'image', 'url', 'contact', 'phone', 'sms', 'email', 'geo', 'event'];
       el.tabs.innerHTML = order.map((key) => `
         <button class="tab ${key === currentKind ? 'active' : ''}" type="button" data-kind="${key}">
           ${builders[key].label}
@@ -924,20 +737,6 @@
     function switchKind(kind) {
       currentKind = kind;
       values = structuredClone(builders[kind].defaults);
-      activePresetId = kind === 'pixel' ? activePresetId : '';
-      renderPresets();
-      renderTabs();
-      renderForm();
-      updateAll();
-    }
-
-    function applyPreset(id) {
-      const preset = pixelPresets.find((item) => item.id === id);
-      if (!preset) return;
-      currentKind = 'pixel';
-      activePresetId = id;
-      values = { title: preset.title, body: preset.body };
-      renderPresets();
       renderTabs();
       renderForm();
       updateAll();
@@ -952,10 +751,6 @@
     }
 
     function resetCurrent() {
-      if (currentKind === 'pixel' && activePresetId) {
-        applyPreset(activePresetId);
-        return;
-      }
       values = structuredClone(builders[currentKind].defaults);
       renderForm();
       updateAll();
@@ -1002,7 +797,6 @@
       el.previewTitle.textContent = data.title || '扫一扫';
       el.previewSubtitle.textContent = data.subtitle || '';
       el.previewBody.textContent = data.body || '';
-      el.previewBody.classList.toggle('pixel', !!data.pixel);
       if (data.image) {
         el.previewImage.src = data.image;
         el.previewImage.classList.add('show');
