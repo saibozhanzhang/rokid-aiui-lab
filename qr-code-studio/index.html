@@ -1,0 +1,1129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>扫一扫二维码创作台</title>
+  <script src="./vendor/qrcode-generator.js"></script>
+  <style>
+    :root {
+      --bg: #f6f7f5;
+      --panel: #ffffff;
+      --ink: #172017;
+      --muted: #68736a;
+      --line: #dce4dc;
+      --soft: #edf5ed;
+      --green: #19c754;
+      --green-dark: #0f8f3b;
+      --glass: #041006;
+      --glass-green: #40ff5e;
+      --shadow: 0 18px 50px rgba(20, 38, 22, 0.10);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+      letter-spacing: 0;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.08;
+      font-weight: 850;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.55;
+      max-width: 760px;
+    }
+
+    .badge {
+      justify-self: end;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 13px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      color: var(--green-dark);
+      font-size: 14px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(360px, 0.92fr) minmax(420px, 1.08fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel-head {
+      padding: 18px 18px 0;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+      font-weight: 820;
+    }
+
+    .panel-note {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .presets {
+      padding: 14px 18px 18px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .preset {
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfdfb;
+      text-align: left;
+      min-height: 78px;
+    }
+
+    .preset.active {
+      border-color: var(--green);
+      background: #effbf2;
+    }
+
+    .pixel-mini {
+      width: 58px;
+      height: 58px;
+      border-radius: 12px;
+      background: #061009;
+      color: var(--glass-green);
+      display: grid;
+      place-items: center;
+      white-space: pre;
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 8px;
+      line-height: 8px;
+      overflow: hidden;
+    }
+
+    .preset-name {
+      display: block;
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .preset-copy {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .tools {
+      margin-top: 18px;
+    }
+
+    .ideas {
+      margin-top: 18px;
+      padding: 16px 18px 18px;
+    }
+
+    .idea-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .idea {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfdfb;
+      padding: 12px;
+      min-height: 86px;
+    }
+
+    .idea strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.3;
+      font-weight: 820;
+    }
+
+    .idea span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 14px 18px 0;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      background: #fbfdfb;
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    .tab.active {
+      color: #fff;
+      border-color: var(--green);
+      background: var(--green);
+    }
+
+    .form {
+      padding: 16px 18px 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      color: #354235;
+      font-size: 13px;
+      font-weight: 780;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fbfdfb;
+      color: var(--ink);
+      padding: 11px 12px;
+      outline: none;
+      min-height: 44px;
+    }
+
+    textarea {
+      min-height: 108px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(25, 199, 84, 0.13);
+    }
+
+    .checkline {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      min-height: 44px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 680;
+    }
+
+    .checkline input {
+      width: 18px;
+      height: 18px;
+      min-height: auto;
+      box-shadow: none;
+    }
+
+    .preview-wrap {
+      position: sticky;
+      top: 18px;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .qr-card {
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+      align-content: start;
+    }
+
+    .qr-box {
+      width: 316px;
+      min-height: 316px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+    }
+
+    .qr-box svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .actions {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .action {
+      border: 0;
+      border-radius: 12px;
+      min-height: 42px;
+      background: var(--ink);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 780;
+    }
+
+    .action.secondary {
+      background: var(--soft);
+      color: var(--green-dark);
+      border: 1px solid #cceacc;
+    }
+
+    .payload {
+      width: 100%;
+      min-height: 132px;
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      color: #314034;
+    }
+
+    .payload-caption {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .payload-stats {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--green-dark);
+      font-weight: 760;
+    }
+
+    .glass {
+      min-height: 316px;
+      border-radius: 22px;
+      background: var(--glass);
+      color: var(--glass-green);
+      border: 1px solid rgba(64, 255, 94, 0.48);
+      padding: 18px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+    }
+
+    .glass-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      color: #8dff9e;
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .glass-type {
+      border: 1px solid rgba(64, 255, 94, 0.58);
+      border-radius: 999px;
+      padding: 3px 8px;
+    }
+
+    .glass-body {
+      display: grid;
+      align-content: center;
+      gap: 8px;
+      padding: 12px 0;
+    }
+
+    .glass-title {
+      margin: 0;
+      color: #ffffff;
+      font-size: 30px;
+      line-height: 1.18;
+      font-weight: 880;
+    }
+
+    .glass-subtitle {
+      margin: 0;
+      color: #a9ffb6;
+      font-size: 18px;
+      line-height: 1.35;
+      font-weight: 760;
+    }
+
+    .glass-message {
+      margin: 10px 0 0;
+      color: #ffffff;
+      white-space: pre-wrap;
+      font-size: 22px;
+      line-height: 1.28;
+      font-weight: 780;
+      word-break: break-word;
+    }
+
+    .glass-message.pixel {
+      color: var(--glass-green);
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: clamp(14px, 2.1vw, 22px);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    .glass-image {
+      width: 100%;
+      max-height: 210px;
+      object-fit: contain;
+      border: 1px solid rgba(64, 255, 94, 0.35);
+      border-radius: 12px;
+      background: transparent;
+      display: none;
+    }
+
+    .glass-image.show {
+      display: block;
+    }
+
+    .glass-foot {
+      color: #7ccd86;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .toast {
+      min-height: 24px;
+      color: var(--green-dark);
+      font-size: 13px;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    @media (max-width: 1040px) {
+      .layout,
+      .preview-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-wrap {
+        position: static;
+      }
+
+      .qr-card {
+        justify-items: stretch;
+      }
+
+      .qr-box {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app {
+        padding: 14px;
+      }
+
+      .top {
+        grid-template-columns: 1fr;
+      }
+
+      .badge {
+        justify-self: start;
+      }
+
+      .presets,
+      .field-row,
+      .idea-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <div>
+        <h1 class="title">扫一扫二维码创作台</h1>
+        <p class="subtitle">给乐奇 AI 眼镜准备一枚会变魔法的二维码。左边选内容，右边马上看到二维码和眼镜端预览。</p>
+      </div>
+      <div class="badge">扫一扫兼容 · A2UI 友好格式</div>
+    </header>
+
+    <section class="layout">
+      <div>
+        <section class="panel">
+          <div class="panel-head">
+            <h2 class="panel-title">日常像素密语</h2>
+            <p class="panel-note">这些二维码扫出来就是眼镜里的小图案，很适合生日、聚会、约饭和悄悄传话。</p>
+          </div>
+          <div class="presets" id="presets"></div>
+        </section>
+
+        <section class="panel tools">
+          <div class="panel-head">
+            <h2 class="panel-title">自己生成</h2>
+            <p class="panel-note">优先提供扫一扫里显示效果稳定的类型。Wi-Fi、名片、网址、日程等会走结构化 GUI。</p>
+          </div>
+          <div class="tabs" id="tabs"></div>
+          <form class="form" id="form"></form>
+        </section>
+
+        <section class="panel ideas">
+          <h2 class="panel-title">适合这样玩</h2>
+          <div class="idea-grid">
+            <div class="idea"><strong>家里 Wi-Fi 贴</strong><span>朋友来家里，戴眼镜一扫就知道网络名和密码。</span></div>
+            <div class="idea"><strong>聚会暗号</strong><span>吧台、餐桌、生日卡片里藏一句只有眼镜能看的话。</span></div>
+            <div class="idea"><strong>摊位小彩蛋</strong><span>二维码贴在杯子、菜单、展台上，扫到小图案或一句提示。</span></div>
+            <div class="idea"><strong>交换名片</strong><span>把电话、邮箱、身份做成清爽名片卡，一扫就能看懂。</span></div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel preview-wrap">
+        <div class="panel-head">
+          <h2 class="panel-title">实时预览</h2>
+          <p class="panel-note">右侧是乐奇 AI 眼镜里的大致显示效果，左侧二维码可直接保存或复制内容。</p>
+        </div>
+        <div class="preview-grid">
+          <div class="qr-card">
+            <div class="qr-box" id="qrBox"></div>
+            <div class="actions">
+              <button class="action" id="downloadPng" type="button">下载 PNG</button>
+              <button class="action secondary" id="downloadSvg" type="button">下载 SVG</button>
+              <button class="action secondary" id="copyPayload" type="button">复制内容</button>
+              <button class="action secondary" id="resetCurrent" type="button">恢复示例</button>
+            </div>
+            <textarea class="payload" id="payload" readonly></textarea>
+            <div class="payload-stats">
+              <span class="stat-pill" id="payloadBytes">0 字节</span>
+              <span id="payloadTip">内容越短，眼镜越容易秒扫。</span>
+            </div>
+            <div class="payload-caption">这是二维码真正写入的内容。用「扫一扫」扫它，就会按对应格式渲染。</div>
+            <div class="toast" id="toast"></div>
+          </div>
+          <div class="glass" id="glassPreview">
+            <div class="glass-head">
+              <span>乐奇 AI 眼镜预览</span>
+              <span class="glass-type" id="previewType">密语</span>
+            </div>
+            <div class="glass-body">
+              <h3 class="glass-title" id="previewTitle">生日快乐</h3>
+              <p class="glass-subtitle" id="previewSubtitle">眼镜专属</p>
+              <img class="glass-image" id="previewImage" alt="">
+              <pre class="glass-message pixel" id="previewBody"></pre>
+            </div>
+            <div class="glass-foot" id="previewFoot">只显示在你的乐奇 AI 眼镜里，一起乐在奇中，奇乐无穷！</div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const BRAND_FOOT = '只显示在你的乐奇 AI 眼镜里，一起乐在奇中，奇乐无穷！';
+
+    const pixelPresets = [
+      {
+        id: 'cake',
+        name: '生日蛋糕',
+        copy: '生日趴一亮相就懂',
+        title: '生日快乐',
+        body: '  ██  \n  ██  \n██████\n█░░░░█\n██████',
+      },
+      {
+        id: 'firework',
+        name: '烟花',
+        copy: '祝贺、开场、气氛组',
+        title: '今晚放光',
+        body: '░  █  ░\n█░ █ ░█\n ░███░ \n█░ █ ░█\n░  █  ░',
+      },
+      {
+        id: 'drumstick',
+        name: '鸡腿',
+        copy: '约饭暗号，一扫就饿',
+        title: '加个鸡腿',
+        body: ' ███  \n█████ \n ███  \n  ██  \n ██ ██',
+      },
+      {
+        id: 'thumb',
+        name: '大拇指',
+        copy: '点赞、认可、干得漂亮',
+        title: '干得漂亮',
+        body: '  ██  \n  ██  \n█████ \n██████\n█ █ █ ',
+      },
+      {
+        id: 'heart',
+        name: '小心心',
+        copy: '低调表达喜欢',
+        title: '收到心意',
+        body: ' ██ ██ \n███████\n███████\n █████ \n  ███  \n   █   ',
+      },
+      {
+        id: 'coffee',
+        name: '咖啡',
+        copy: '开工、提神、会议前',
+        title: '咖啡续命',
+        body: ' ░░░  \n█████ \n█   █░\n█   █░\n█████ \n ▀▀▀  ',
+      },
+      {
+        id: 'beer',
+        name: '干杯',
+        copy: '聚会碰杯专用',
+        title: '今晚干杯',
+        body: '█  █  \n█  █  \n████  \n█████ \n ███  \n ███  ',
+      },
+      {
+        id: 'ok',
+        name: '已搞定',
+        copy: '项目完成，默契确认',
+        title: '稳了',
+        body: '    ██\n   ██ \n█ ██  \n███   \n██    ',
+      },
+      {
+        id: 'gift',
+        name: '小礼物',
+        copy: '生日、纪念日、惊喜',
+        title: '给你礼物',
+        body: ' ████ \n██████\n  ██  \n██████\n█ ██ █\n██████',
+      },
+      {
+        id: 'smile',
+        name: '笑一下',
+        copy: '别太严肃，开心点',
+        title: '笑一下',
+        body: '█    █\n      \n  ██  \n█    █\n ████ ',
+      },
+      {
+        id: 'star',
+        name: '小星星',
+        copy: '给今天一点高光',
+        title: '今天发光',
+        body: '  █  \n ███ \n█████\n ███ \n█ █ █',
+      },
+      {
+        id: 'umbrella',
+        name: '带伞',
+        copy: '天气提醒，不费口舌',
+        title: '记得带伞',
+        body: ' ████ \n██████\n  ██  \n  ██  \n ██   ',
+      },
+    ];
+
+    const builders = {
+      pixel: {
+        label: '像素密语',
+        defaults: { title: '生日快乐', body: pixelPresets[0].body },
+        fields: [
+          { key: 'title', label: '标题', type: 'text', placeholder: '生日快乐' },
+          { key: 'body', label: '像素图案或短句', type: 'textarea', placeholder: '用 █ ░ 和换行拼一个小图案' },
+        ],
+        payload: (v) => 'GLASS-SECRET:' + JSON.stringify({ title: v.title || '眼镜密语', body: v.body || '' }),
+        preview: (v) => ({ type: '密语', title: v.title || '眼镜密语', subtitle: '眼镜专属', body: v.body || '', pixel: true, foot: BRAND_FOOT }),
+      },
+      wifi: {
+        label: 'Wi-Fi',
+        defaults: { ssid: 'CyberStation-5G', password: 'happy8888', auth: 'WPA', hidden: false },
+        fields: [
+          { key: 'ssid', label: 'Wi-Fi 名称', type: 'text', placeholder: '例如：CyberStation-5G' },
+          { key: 'password', label: '密码', type: 'text', placeholder: '没有密码可以留空' },
+          { key: 'auth', label: '加密方式', type: 'select', options: [['WPA', 'WPA/WPA2'], ['WEP', 'WEP'], ['nopass', '免密码']] },
+          { key: 'hidden', label: '隐藏网络', type: 'checkbox' },
+        ],
+        payload: (v) => {
+          const auth = v.auth || 'WPA';
+          const parts = ['WIFI:', 'T:' + auth + ';', 'S:' + wifiEscape(v.ssid || '') + ';'];
+          if (auth !== 'nopass' && v.password) parts.push('P:' + wifiEscape(v.password) + ';');
+          if (v.hidden) parts.push('H:true;');
+          parts.push(';');
+          return parts.join('');
+        },
+        preview: (v) => ({ type: 'Wi-Fi', title: v.ssid || 'Wi-Fi 网络', subtitle: v.auth === 'nopass' ? '免密码' : (v.auth || 'WPA'), body: v.password ? '密码：' + v.password : '没有密码字段', foot: '请在手机或路由器设置里手动连接' }),
+      },
+      text: {
+        label: '文字密语',
+        defaults: { title: '今晚暗号', body: '到吧台说：青柠不要冰' },
+        fields: [
+          { key: 'title', label: '标题', type: 'text' },
+          { key: 'body', label: '正文', type: 'textarea' },
+        ],
+        payload: (v) => 'GLASS-SECRET:' + JSON.stringify({ title: v.title || '眼镜密语', body: v.body || '' }),
+        preview: (v) => ({ type: '密语', title: v.title || '眼镜密语', subtitle: '眼镜专属', body: v.body || '', foot: BRAND_FOOT }),
+      },
+      image: {
+        label: '图片',
+        defaults: { url: 'https://dummyimage.com/800x450/041006/40ff5e.png&text=AIUI', title: '图片已打开' },
+        fields: [
+          { key: 'url', label: '图片网址', type: 'url', placeholder: 'https://example.com/photo.jpg' },
+          { key: 'title', label: '显示标题', type: 'text', placeholder: '图片已打开' },
+        ],
+        payload: (v) => 'IMAGE:' + cleanUrl(v.url || ''),
+        preview: (v) => ({ type: '图片', title: v.title || '图片已打开', subtitle: domainFromUrl(v.url) || '图片链接', body: cleanUrl(v.url || ''), image: cleanUrl(v.url || ''), foot: '图片链接越稳定，眼镜显示越顺' }),
+      },
+      url: {
+        label: '网址',
+        defaults: { url: 'https://js.rokid.com/AIUI' },
+        fields: [{ key: 'url', label: '网址', type: 'url', placeholder: 'https://example.com' }],
+        payload: (v) => cleanUrl(v.url || ''),
+        preview: (v) => ({ type: '链接', title: domainFromUrl(v.url) || '网址', subtitle: /^https:\/\//i.test(v.url || '') ? 'HTTPS 链接' : '链接', body: cleanUrl(v.url || ''), foot: '先看清来源，再决定是否用手机打开' }),
+      },
+      contact: {
+        label: '名片',
+        defaults: { name: '赛博站长', org: 'Rokid AIUI 玩家', tel: '13800000000', email: 'hello@example.com' },
+        fields: [
+          { key: 'name', label: '姓名', type: 'text' },
+          { key: 'org', label: '组织/身份', type: 'text' },
+          { key: 'tel', label: '电话', type: 'tel' },
+          { key: 'email', label: '邮箱', type: 'email' },
+        ],
+        payload: (v) => ['BEGIN:VCARD', 'VERSION:3.0', 'FN:' + safeLine(v.name), 'ORG:' + safeLine(v.org), 'TEL:' + safeLine(v.tel), 'EMAIL:' + safeLine(v.email), 'END:VCARD'].join('\n'),
+        preview: (v) => ({ type: '名片', title: v.name || '联系人', subtitle: v.org || '名片二维码', body: ['电话：' + (v.tel || ''), '邮箱：' + (v.email || '')].filter(Boolean).join('\n'), foot: '单击继续扫描 · 双击退出' }),
+      },
+      phone: {
+        label: '电话',
+        defaults: { tel: '13800000000' },
+        fields: [{ key: 'tel', label: '电话号码', type: 'tel' }],
+        payload: (v) => 'tel:' + (v.tel || ''),
+        preview: (v) => ({ type: '电话', title: v.tel || '电话号码', subtitle: '电话号码', body: '请在手机上拨打或保存', foot: '单击继续扫描 · 双击退出' }),
+      },
+      sms: {
+        label: '短信',
+        defaults: { tel: '13800000000', body: '我到了，在门口等你。' },
+        fields: [
+          { key: 'tel', label: '收信号码', type: 'tel' },
+          { key: 'body', label: '短信内容', type: 'textarea' },
+        ],
+        payload: (v) => 'SMSTO:' + (v.tel || '') + ':' + (v.body || ''),
+        preview: (v) => ({ type: '短信', title: v.tel || '短信', subtitle: '短信二维码', body: v.body || '没有短信正文', foot: '单击继续扫描 · 双击退出' }),
+      },
+      email: {
+        label: '邮箱',
+        defaults: { to: 'hello@example.com', subject: '认识一下', body: '你好，我是赛博站长，很高兴认识你。' },
+        fields: [
+          { key: 'to', label: '收件人', type: 'email' },
+          { key: 'subject', label: '主题', type: 'text' },
+          { key: 'body', label: '正文', type: 'textarea' },
+        ],
+        payload: (v) => 'mailto:' + encodeURIComponent(v.to || '') + '?subject=' + encodeURIComponent(v.subject || '') + '&body=' + encodeURIComponent(v.body || ''),
+        preview: (v) => ({ type: '邮箱', title: v.to || '邮箱', subtitle: v.subject || '邮件地址', body: v.body || '可在手机上发邮件', foot: '单击继续扫描 · 双击退出' }),
+      },
+      geo: {
+        label: '位置',
+        defaults: { label: '杭州西湖', lat: '30.2427', lng: '120.1508' },
+        fields: [
+          { key: 'label', label: '地点名称', type: 'text' },
+          { key: 'lat', label: '纬度', type: 'text' },
+          { key: 'lng', label: '经度', type: 'text' },
+        ],
+        payload: (v) => 'geo:' + (v.lat || '') + ',' + (v.lng || '') + '?q=' + encodeURIComponent(v.label || ''),
+        preview: (v) => ({ type: '位置', title: v.label || '位置', subtitle: [v.lat, v.lng].filter(Boolean).join(','), body: '可在地图里搜索这个位置', foot: '单击继续扫描 · 双击退出' }),
+      },
+      event: {
+        label: '日程',
+        defaults: { title: 'AIUI 小聚', start: '2026-05-20T19:30', end: '2026-05-20T21:30', location: '杭州' },
+        fields: [
+          { key: 'title', label: '日程标题', type: 'text' },
+          { key: 'start', label: '开始时间', type: 'datetime-local' },
+          { key: 'end', label: '结束时间', type: 'datetime-local' },
+          { key: 'location', label: '地点', type: 'text' },
+        ],
+        payload: (v) => ['BEGIN:VEVENT', 'SUMMARY:' + safeLine(v.title), 'DTSTART:' + toIcsDate(v.start), 'DTEND:' + toIcsDate(v.end), 'LOCATION:' + safeLine(v.location), 'END:VEVENT'].join('\n'),
+        preview: (v) => ({ type: '日程', title: v.title || '日程', subtitle: [v.start, v.end ? '至 ' + v.end : ''].filter(Boolean).join(' '), body: v.location ? '地点：' + v.location : '没有地点字段', foot: '单击继续扫描 · 双击退出' }),
+      },
+    };
+
+    let currentKind = 'pixel';
+    let values = structuredClone(builders.pixel.defaults);
+    let activePresetId = 'cake';
+    let currentSvg = '';
+
+    const el = {
+      presets: document.getElementById('presets'),
+      tabs: document.getElementById('tabs'),
+      form: document.getElementById('form'),
+      qrBox: document.getElementById('qrBox'),
+      payload: document.getElementById('payload'),
+      payloadBytes: document.getElementById('payloadBytes'),
+      payloadTip: document.getElementById('payloadTip'),
+      toast: document.getElementById('toast'),
+      previewType: document.getElementById('previewType'),
+      previewTitle: document.getElementById('previewTitle'),
+      previewSubtitle: document.getElementById('previewSubtitle'),
+      previewImage: document.getElementById('previewImage'),
+      previewBody: document.getElementById('previewBody'),
+      previewFoot: document.getElementById('previewFoot'),
+      downloadPng: document.getElementById('downloadPng'),
+      downloadSvg: document.getElementById('downloadSvg'),
+      copyPayload: document.getElementById('copyPayload'),
+      resetCurrent: document.getElementById('resetCurrent'),
+    };
+
+    function init() {
+      renderPresets();
+      renderTabs();
+      renderForm();
+      updateAll();
+      el.form.addEventListener('input', onFormInput);
+      el.form.addEventListener('change', onFormInput);
+      el.downloadSvg.addEventListener('click', downloadSvg);
+      el.downloadPng.addEventListener('click', downloadPng);
+      el.copyPayload.addEventListener('click', copyPayload);
+      el.resetCurrent.addEventListener('click', resetCurrent);
+    }
+
+    function renderPresets() {
+      el.presets.innerHTML = pixelPresets.map((preset) => `
+        <button class="preset ${preset.id === activePresetId ? 'active' : ''}" type="button" data-preset="${preset.id}">
+          <span class="pixel-mini">${escapeHtml(preset.body)}</span>
+          <span>
+            <span class="preset-name">${escapeHtml(preset.name)}</span>
+            <span class="preset-copy">${escapeHtml(preset.copy)}</span>
+          </span>
+        </button>
+      `).join('');
+      el.presets.querySelectorAll('[data-preset]').forEach((button) => {
+        button.addEventListener('click', () => applyPreset(button.dataset.preset));
+      });
+    }
+
+    function renderTabs() {
+      const order = ['pixel', 'wifi', 'text', 'image', 'url', 'contact', 'phone', 'sms', 'email', 'geo', 'event'];
+      el.tabs.innerHTML = order.map((key) => `
+        <button class="tab ${key === currentKind ? 'active' : ''}" type="button" data-kind="${key}">
+          ${builders[key].label}
+        </button>
+      `).join('');
+      el.tabs.querySelectorAll('[data-kind]').forEach((button) => {
+        button.addEventListener('click', () => switchKind(button.dataset.kind));
+      });
+    }
+
+    function renderForm() {
+      const builder = builders[currentKind];
+      const rows = [];
+      builder.fields.forEach((field) => rows.push(fieldHtml(field)));
+      el.form.innerHTML = rows.join('');
+    }
+
+    function fieldHtml(field) {
+      const value = values[field.key] ?? '';
+      if (field.type === 'textarea') {
+        return `<div class="field"><label for="${field.key}">${field.label}</label><textarea id="${field.key}" data-field="${field.key}" placeholder="${field.placeholder || ''}">${escapeHtml(value)}</textarea></div>`;
+      }
+      if (field.type === 'select') {
+        return `<div class="field"><label for="${field.key}">${field.label}</label><select id="${field.key}" data-field="${field.key}">${field.options.map(([val, label]) => `<option value="${val}" ${value === val ? 'selected' : ''}>${label}</option>`).join('')}</select></div>`;
+      }
+      if (field.type === 'checkbox') {
+        return `<label class="checkline"><input type="checkbox" data-field="${field.key}" ${value ? 'checked' : ''}>${field.label}</label>`;
+      }
+      return `<div class="field"><label for="${field.key}">${field.label}</label><input id="${field.key}" data-field="${field.key}" type="${field.type || 'text'}" value="${escapeAttr(value)}" placeholder="${field.placeholder || ''}"></div>`;
+    }
+
+    function switchKind(kind) {
+      currentKind = kind;
+      values = structuredClone(builders[kind].defaults);
+      activePresetId = kind === 'pixel' ? activePresetId : '';
+      renderPresets();
+      renderTabs();
+      renderForm();
+      updateAll();
+    }
+
+    function applyPreset(id) {
+      const preset = pixelPresets.find((item) => item.id === id);
+      if (!preset) return;
+      currentKind = 'pixel';
+      activePresetId = id;
+      values = { title: preset.title, body: preset.body };
+      renderPresets();
+      renderTabs();
+      renderForm();
+      updateAll();
+    }
+
+    function onFormInput(event) {
+      const input = event.target.closest('[data-field]');
+      if (!input) return;
+      const key = input.dataset.field;
+      values[key] = input.type === 'checkbox' ? input.checked : input.value;
+      updateAll();
+    }
+
+    function resetCurrent() {
+      if (currentKind === 'pixel' && activePresetId) {
+        applyPreset(activePresetId);
+        return;
+      }
+      values = structuredClone(builders[currentKind].defaults);
+      renderForm();
+      updateAll();
+    }
+
+    function updateAll() {
+      const builder = builders[currentKind];
+      const payload = builder.payload(values);
+      const preview = builder.preview(values);
+      el.payload.value = payload;
+      renderPayloadStats(payload);
+      renderQr(payload);
+      renderPreview(preview);
+    }
+
+    function renderPayloadStats(payload) {
+      const bytes = new TextEncoder().encode(payload).length;
+      el.payloadBytes.textContent = bytes + ' 字节';
+      if (bytes <= 120) {
+        el.payloadTip.textContent = '非常轻，适合眼镜快速扫描。';
+      } else if (bytes <= 320) {
+        el.payloadTip.textContent = '长度适中，建议打印清晰一点。';
+      } else {
+        el.payloadTip.textContent = '内容偏长，尽量缩短文字，二维码会更好扫。';
+      }
+    }
+
+    function renderQr(payload) {
+      try {
+        qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+        const qr = qrcode(0, 'M');
+        qr.addData(payload, 'Byte');
+        qr.make();
+        currentSvg = qr.createSvgTag({ cellSize: 8, margin: 4, scalable: true });
+        el.qrBox.innerHTML = currentSvg;
+      } catch (error) {
+        el.qrBox.innerHTML = '<div class="payload-caption">内容太长了，试着缩短一点。</div>';
+        currentSvg = '';
+      }
+    }
+
+    function renderPreview(data) {
+      el.previewType.textContent = data.type || builders[currentKind].label;
+      el.previewTitle.textContent = data.title || '扫一扫';
+      el.previewSubtitle.textContent = data.subtitle || '';
+      el.previewBody.textContent = data.body || '';
+      el.previewBody.classList.toggle('pixel', !!data.pixel);
+      if (data.image) {
+        el.previewImage.src = data.image;
+        el.previewImage.classList.add('show');
+        el.previewBody.style.fontSize = '14px';
+      } else {
+        el.previewImage.removeAttribute('src');
+        el.previewImage.classList.remove('show');
+        el.previewBody.style.fontSize = '';
+      }
+      el.previewFoot.textContent = data.foot || '单击继续扫描 · 双击退出';
+    }
+
+    function downloadSvg() {
+      if (!currentSvg) return;
+      const blob = new Blob([currentSvg], { type: 'image/svg+xml;charset=utf-8' });
+      downloadBlob(blob, filename('svg'));
+      flash('SVG 已生成');
+    }
+
+    function downloadPng() {
+      if (!currentSvg) return;
+      const svgBlob = new Blob([currentSvg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 1024;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          downloadBlob(blob, filename('png'));
+          flash('PNG 已生成');
+        }, 'image/png');
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        flash('PNG 生成失败，先下载 SVG');
+      };
+      img.src = url;
+    }
+
+    async function copyPayload() {
+      try {
+        await navigator.clipboard.writeText(el.payload.value);
+        flash('内容已复制');
+      } catch (error) {
+        el.payload.select();
+        document.execCommand('copy');
+        flash('内容已复制');
+      }
+    }
+
+    function downloadBlob(blob, name) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function filename(ext) {
+      const slug = (builders[currentKind].label || 'qr').replace(/\s+/g, '-');
+      return `rokid-${slug}-${Date.now()}.${ext}`;
+    }
+
+    function flash(text) {
+      el.toast.textContent = text;
+      clearTimeout(flash.timer);
+      flash.timer = setTimeout(() => { el.toast.textContent = ''; }, 1800);
+    }
+
+    function wifiEscape(text) {
+      return String(text || '').replace(/([\\;,:"])/g, '\\$1');
+    }
+
+    function cleanUrl(url) {
+      const value = String(url || '').trim();
+      if (!value) return '';
+      return /^https?:\/\//i.test(value) ? value : 'https://' + value;
+    }
+
+    function domainFromUrl(url) {
+      try {
+        return new URL(cleanUrl(url)).hostname.replace(/^www\./, '');
+      } catch (error) {
+        return '';
+      }
+    }
+
+    function toIcsDate(value) {
+      if (!value) return '';
+      return value.replace(/[-:]/g, '').replace(/\.\d+$/, '') + '00';
+    }
+
+    function safeLine(value) {
+      return String(value || '').replace(/\r?\n/g, ' ').trim();
+    }
+
+    function escapeHtml(text) {
+      return String(text ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      })[char]);
+    }
+
+    function escapeAttr(text) {
+      return escapeHtml(text).replace(/`/g, '&#96;');
+    }
+
+    init();
+  </script>
+</body>
+</html>
