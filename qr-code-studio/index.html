@@ -583,6 +583,16 @@
         payload: (v) => 'GLASS-SECRET:' + JSON.stringify({ title: v.title || '眼镜卡片', body: v.body || '' }),
         preview: (v) => ({ type: '文字', title: v.title || '眼镜卡片', subtitle: '文字卡片', body: v.body || '', foot: BRAND_FOOT }),
       },
+      lqsecret: {
+        label: '乐奇密文',
+        defaults: { title: '今晚暗号', body: '到吧台说：青柠不要冰' },
+        fields: [
+          { key: 'title', label: '标题', type: 'text' },
+          { key: 'body', label: '秘密内容', type: 'textarea' },
+        ],
+        payload: (v) => encodeLeqiPayload({ type: 'card', title: v.title || '乐奇密文', body: v.body || '' }),
+        preview: (v) => ({ type: '密文', title: v.title || '乐奇密文', subtitle: '手机扫码只会看到乱码', body: v.body || '', foot: BRAND_FOOT }),
+      },
       image: {
         label: '图片',
         defaults: { url: 'https://dummyimage.com/800x450/041006/40ff5e.png&text=AIUI', title: '图片已打开' },
@@ -595,10 +605,13 @@
       },
       url: {
         label: '网址',
-        defaults: { url: 'https://js.rokid.com/AIUI' },
-        fields: [{ key: 'url', label: '网址', type: 'url', placeholder: 'https://example.com' }],
-        payload: (v) => cleanUrl(v.url || ''),
-        preview: (v) => ({ type: '链接', title: domainFromUrl(v.url) || '网址', subtitle: /^https:\/\//i.test(v.url || '') ? 'HTTPS 链接' : '链接', body: cleanUrl(v.url || ''), foot: '先看清来源，再决定是否用手机打开' }),
+        defaults: { title: 'AIUI 开发文档', url: 'https://js.rokid.com/AIUI' },
+        fields: [
+          { key: 'title', label: '网站名称 / 功能', type: 'text', placeholder: '例如：AIUI 开发文档' },
+          { key: 'url', label: '网址', type: 'url', placeholder: 'https://example.com' },
+        ],
+        payload: (v) => 'GLASS-LINK:' + JSON.stringify({ type: 'url', title: v.title || domainFromUrl(v.url) || '网址', body: cleanUrl(v.url || ''), url: cleanUrl(v.url || '') }),
+        preview: (v) => ({ type: '链接', title: v.title || domainFromUrl(v.url) || '网址', subtitle: '网站名称 / 功能', body: cleanUrl(v.url || ''), foot: '先看清来源，再决定是否用手机打开' }),
       },
       contact: {
         label: '名片',
@@ -702,7 +715,7 @@
     }
 
     function renderTabs() {
-      const order = ['wifi', 'text', 'image', 'url', 'contact', 'phone', 'sms', 'email', 'geo', 'event'];
+      const order = ['wifi', 'lqsecret', 'text', 'image', 'url', 'contact', 'phone', 'sms', 'email', 'geo', 'event'];
       el.tabs.innerHTML = order.map((key) => `
         <button class="tab ${key === currentKind ? 'active' : ''}" type="button" data-kind="${key}">
           ${builders[key].label}
@@ -901,6 +914,63 @@
 
     function safeLine(value) {
       return String(value || '').replace(/\r?\n/g, ' ').trim();
+    }
+
+    const LEQI_SECRET = 'leqi-aiui-scan-v1';
+
+    function encodeLeqiPayload(payload) {
+      const plain = JSON.stringify(payload);
+      const nonce = createNonce();
+      const tag = fnv32(plain + '|' + LEQI_SECRET + '|' + nonce).toString(36);
+      const seed = fnv32(LEQI_SECRET + '|' + nonce + '|' + tag);
+      const encrypted = xorBytes(utf8Bytes(plain), seed);
+      return 'LQ1:' + nonce + '.' + tag + '.' + base64UrlEncode(encrypted);
+    }
+
+    function createNonce() {
+      const bytes = new Uint8Array(4);
+      if (window.crypto && window.crypto.getRandomValues) {
+        window.crypto.getRandomValues(bytes);
+      } else {
+        const seed = Date.now() ^ Math.floor(Math.random() * 0xffffffff);
+        bytes[0] = seed & 255;
+        bytes[1] = (seed >>> 8) & 255;
+        bytes[2] = (seed >>> 16) & 255;
+        bytes[3] = (seed >>> 24) & 255;
+      }
+      return Array.from(bytes).map((item) => item.toString(16).padStart(2, '0')).join('');
+    }
+
+    function utf8Bytes(text) {
+      return new TextEncoder().encode(String(text || ''));
+    }
+
+    function xorBytes(bytes, seed) {
+      let state = seed >>> 0 || 0x6d2b79f5;
+      const out = new Uint8Array(bytes.length);
+      for (let i = 0; i < bytes.length; i++) {
+        state ^= state << 13;
+        state ^= state >>> 17;
+        state ^= state << 5;
+        out[i] = bytes[i] ^ (state & 255);
+      }
+      return out;
+    }
+
+    function fnv32(text) {
+      let hash = 0x811c9dc5;
+      const value = String(text || '');
+      for (let i = 0; i < value.length; i++) {
+        hash ^= value.charCodeAt(i);
+        hash = Math.imul(hash, 0x01000193);
+      }
+      return hash >>> 0;
+    }
+
+    function base64UrlEncode(bytes) {
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
     }
 
     function escapeHtml(text) {

@@ -23,7 +23,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.34';
+const APP_VERSION = '1.0.36';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -72,6 +72,7 @@ const PHOTO_CAPTURE_PROFILES = [
   }
 ];
 const BRAND_FOOTNOTE = '只显示在你的乐奇 AI 眼镜里，一起乐在奇中，奇乐无穷！';
+const LEQI_SECRET = 'leqi-aiui-scan-v1';
 const COPYRIGHT_TEXT = '© 赛博站长';
 const EFFECT_AUDIO = {
   success: '../../assets/success.mp3',
@@ -179,6 +180,92 @@ function decodeText(value) {
   }
 }
 
+function isLeqiCipher(text) {
+  return /^LQ1:/i.test(String(text || '').trim());
+}
+
+function decodeLeqiPayload(text) {
+  const value = String(text || '').trim();
+  const match = value.match(/^LQ1:([^.]+)\.([^.]+)\.([A-Za-z0-9_-]+)$/i);
+  if (!match) throw new Error('bad lq1 payload');
+  const nonce = match[1];
+  const tag = match[2];
+  const bytes = base64UrlDecode(match[3]);
+  const seed = fnv32(LEQI_SECRET + '|' + nonce + '|' + tag);
+  const plain = utf8FromBytes(xorBytes(bytes, seed));
+  const expected = fnv32(plain + '|' + LEQI_SECRET + '|' + nonce).toString(36);
+  if (expected !== tag) throw new Error('lq1 checksum mismatch');
+  return plain;
+}
+
+function xorBytes(bytes, seed) {
+  let state = seed >>> 0 || 0x6d2b79f5;
+  const out = [];
+  for (let i = 0; i < bytes.length; i++) {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    out.push(bytes[i] ^ (state & 255));
+  }
+  return out;
+}
+
+function fnv32(text) {
+  let hash = 0x811c9dc5;
+  const value = String(text || '');
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+function base64UrlDecode(text) {
+  const value = String(text || '').replace(/-/g, '+').replace(/_/g, '/');
+  const padded = value + '==='.slice((value.length + 3) % 4);
+  const bytes = [];
+  let buffer = 0;
+  let bits = 0;
+  for (let i = 0; i < padded.length; i++) {
+    const ch = padded.charAt(i);
+    if (ch === '=') break;
+    const index = BASE64_CHARS.indexOf(ch);
+    if (index < 0) continue;
+    buffer = (buffer << 6) | index;
+    bits += 6;
+    if (bits >= 8) {
+      bits -= 8;
+      bytes.push((buffer >> bits) & 255);
+    }
+  }
+  return bytes;
+}
+
+function utf8FromBytes(bytes) {
+  let out = '';
+  for (let i = 0; i < bytes.length; i++) {
+    const b0 = bytes[i];
+    if (b0 < 0x80) {
+      out += String.fromCharCode(b0);
+    } else if (b0 >= 0xc0 && b0 < 0xe0) {
+      const b1 = bytes[++i] || 0;
+      out += String.fromCharCode(((b0 & 0x1f) << 6) | (b1 & 0x3f));
+    } else if (b0 >= 0xe0 && b0 < 0xf0) {
+      const b1 = bytes[++i] || 0;
+      const b2 = bytes[++i] || 0;
+      out += String.fromCharCode(((b0 & 0x0f) << 12) | ((b1 & 0x3f) << 6) | (b2 & 0x3f));
+    } else {
+      const b1 = bytes[++i] || 0;
+      const b2 = bytes[++i] || 0;
+      const b3 = bytes[++i] || 0;
+      let code = ((b0 & 0x07) << 18) | ((b1 & 0x3f) << 12) | ((b2 & 0x3f) << 6) | (b3 & 0x3f);
+      code -= 0x10000;
+      out += String.fromCharCode(0xd800 + (code >> 10), 0xdc00 + (code & 0x3ff));
+    }
+  }
+  return out;
+}
+
 function trimLines(lines) {
   return lines
     .filter((item) => item !== undefined && item !== null && String(item).trim())
@@ -221,6 +308,7 @@ function isAudioPayload(text) {
 function classifyQrText(text) {
   const value = String(text || '').trim();
   if (!value) return 'empty';
+  if (isLeqiCipher(value)) return 'secret';
   if (/^\{/.test(value) && /"(title|body|message|text)"\s*:/.test(value)) return 'secret';
   if (isImagePayload(value)) return 'image';
   if (isVideoPayload(value)) return 'video';
@@ -249,7 +337,7 @@ function summarizeQrText(text, type) {
   if (type === 'sms') return '这是一个短信二维码。';
   if (type === 'geo') return '这是一个位置二维码。';
   if (type === 'event') return '这是一个日程二维码。';
-  if (type === 'secret') return '这是扫一扫密语，只显示在眼镜里。';
+  if (type === 'secret') return isLeqiCipher(value) ? '这是乐奇密文，已在眼镜里解码。' : '这是扫一扫密语，只显示在眼镜里。';
   if (type === 'image') return '识别到图片，已在眼镜中打开。';
   if (type === 'video') return '识别到视频，正在尝试播放。';
   if (type === 'audio') return '识别到音频，正在播放。';
@@ -500,7 +588,7 @@ function typeLabel(type) {
 function secretPayload(text) {
   const value = String(text || '').trim();
   return value
-    .replace(/^(GLASS-CARD|GLASS-SECRET|GLASS-NOTE|眼镜卡片|眼镜密语|眼镜扫描仪)[:：]\s*/i, '')
+    .replace(/^(GLASS-CARD|GLASS-SECRET|GLASS-NOTE|GLASS-LINK|眼镜卡片|眼镜密语|眼镜扫描仪)[:：]\s*/i, '')
     .trim();
 }
 
@@ -637,14 +725,39 @@ function parseEvent(text) {
 }
 
 function parseSecret(text) {
-  const body = secretPayload(text);
+  let body = secretPayload(text);
+  let isCipher = false;
+  if (isLeqiCipher(body)) {
+    isCipher = true;
+    try {
+      body = decodeLeqiPayload(body);
+    } catch (err) {
+      return {
+        variant: 'secret',
+        title: '密文无法解码',
+        subtitle: '',
+        body: '这枚二维码不是当前版本的乐奇密文，或内容已经损坏。',
+        footnote: '单击继续扫描 · 双击退出'
+      };
+    }
+  }
   if (/^\{/.test(body)) {
     try {
       const json = JSON.parse(body);
+      if (json.type === 'url' || json.url) {
+        const url = json.url || json.body || json.text || '';
+        return {
+          variant: 'url',
+          title: clampText(json.title || domainFromUrl(url) || '网址', 18),
+          subtitle: clampText(json.subtitle || '网站名称 / 功能', 22),
+          body: clampText(url, 96),
+          footnote: '先看清来源，再决定是否用手机打开'
+        };
+      }
       return {
         variant: 'secret',
-        title: clampText(json.title || '眼镜密语', 18),
-        subtitle: '',
+        title: clampText(json.title || (isCipher ? '乐奇密文' : '眼镜密语'), 18),
+        subtitle: isCipher ? '乐奇专属' : '',
         body: clampText(json.body || json.text || json.message || '', 82),
         footnote: BRAND_FOOTNOTE
       };
@@ -652,8 +765,8 @@ function parseSecret(text) {
   }
   return {
     variant: 'secret',
-    title: '眼镜密语',
-    subtitle: '',
+    title: isCipher ? '乐奇密文' : '眼镜密语',
+    subtitle: isCipher ? '乐奇专属' : '',
     body: clampText(body || String(text || ''), 86),
     footnote: BRAND_FOOTNOTE
   };
@@ -701,7 +814,7 @@ function cardTheme(type) {
     return {
       accent: '#40ff5e',
       border: 'rgba(64,255,94,0.72)',
-      panel: 'rgba(64,255,94,0.08)',
+      panel: 'transparent',
       label: '眼镜专属'
     };
   }
@@ -709,7 +822,7 @@ function cardTheme(type) {
     return {
       accent: '#8effa2',
       border: 'rgba(142,255,162,0.55)',
-      panel: 'rgba(142,255,162,0.08)',
+      panel: 'transparent',
       label: '无线网络'
     };
   }
@@ -717,7 +830,7 @@ function cardTheme(type) {
     return {
       accent: '#9fffb1',
       border: 'rgba(159,255,177,0.48)',
-      panel: 'rgba(159,255,177,0.06)',
+      panel: 'transparent',
       label: '链接'
     };
   }
@@ -725,7 +838,7 @@ function cardTheme(type) {
     return {
       accent: '#d7ffd9',
       border: 'rgba(215,255,217,0.42)',
-      panel: 'rgba(215,255,217,0.06)',
+      panel: 'transparent',
       label: '名片'
     };
   }
@@ -733,7 +846,7 @@ function cardTheme(type) {
     return {
       accent: '#c8ffd0',
       border: 'rgba(200,255,208,0.42)',
-      panel: 'rgba(200,255,208,0.06)',
+      panel: 'transparent',
       label: typeLabel(type)
     };
   }
@@ -741,14 +854,14 @@ function cardTheme(type) {
     return {
       accent: '#b8ffc4',
       border: 'rgba(184,255,196,0.42)',
-      panel: 'rgba(184,255,196,0.06)',
+      panel: 'transparent',
       label: typeLabel(type)
     };
   }
   return {
     accent: '#40ff5e',
     border: 'rgba(64,255,94,0.48)',
-    panel: 'rgba(255,255,255,0.05)',
+    panel: 'transparent',
     label: typeLabel(type).toUpperCase()
   };
 }
@@ -784,7 +897,7 @@ function buildA2uiCommands(card, type) {
           id: 'card',
           type: 'view',
           props: {
-            style: `display: flex; flex-direction: column; width: 449px; min-height: 204px; box-sizing: border-box; padding: 16px 17px; border: 1.5px solid ${theme.border}; border-radius: 18px; background-color: #07110a;`
+            style: `display: flex; flex-direction: column; width: 449px; min-height: 204px; box-sizing: border-box; padding: 16px 17px; border: 1.5px solid ${theme.border}; border-radius: 18px; background-color: transparent;`
           },
           children: cardChildren
         },
@@ -801,7 +914,7 @@ function buildA2uiCommands(card, type) {
           type: 'text',
           props: {
             content: theme.label,
-            style: `font-size: 16px; line-height: 22px; font-weight: 800; color: #07110a; background-color: ${theme.accent}; border-radius: 12px; padding: 3px 9px;`
+            style: `font-size: 16px; line-height: 22px; font-weight: 800; color: ${theme.accent}; background-color: transparent; border: 1px solid ${theme.border}; border-radius: 12px; padding: 3px 9px;`
           }
         },
         {
@@ -2315,7 +2428,7 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #050807;
+  background: transparent;
 }
 
 .intro-main {
@@ -2345,7 +2458,7 @@ export default {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: #050807;
+  background: transparent;
   position: absolute;
   top: 0;
   left: 0;
@@ -2359,14 +2472,14 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #050807;
+  background: transparent;
 }
 
 .decode-pulse {
   width: 48px;
   height: 48px;
   border-radius: 24px;
-  background: rgba(64, 255, 94, 0.16);
+  background: transparent;
   border: 2px solid rgba(64, 255, 94, 0.82);
   align-items: center;
   justify-content: center;
@@ -2414,7 +2527,9 @@ export default {
   width: 240px;
   height: 8px;
   border-radius: 4px;
-  background: rgba(64, 255, 94, 0.12);
+  background: transparent;
+  border: 1px solid rgba(64, 255, 94, 0.45);
+  box-sizing: border-box;
   margin-top: 12px;
   overflow: hidden;
 }
@@ -2433,7 +2548,7 @@ export default {
   box-sizing: border-box;
   flex-direction: column;
   justify-content: center;
-  background: #050807;
+  background: transparent;
 }
 
 .plain-card text {
@@ -2459,7 +2574,7 @@ export default {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  background: #07110a;
+  background: transparent;
 }
 
 .card-kicker {
@@ -2511,13 +2626,14 @@ export default {
   box-sizing: border-box;
   flex-direction: column;
   align-items: flex-start;
-  background: #061009;
+  background: transparent;
   border: 1px solid rgba(64, 255, 94, 0.55);
 }
 
 .secret-badge {
-  color: #07110a;
-  background: #40ff5e;
+  color: #40ff5e;
+  background: transparent;
+  border: 1px solid rgba(64, 255, 94, 0.55);
   font-size: 16px;
   line-height: 22px;
   padding: 2px 7px;
@@ -2573,8 +2689,9 @@ export default {
 }
 
 .type-pill {
-  color: #07110a;
-  background: #40ff5e;
+  color: #40ff5e;
+  background: transparent;
+  border: 1px solid rgba(64, 255, 94, 0.55);
   font-size: 16px;
   line-height: 22px;
   padding: 2px 7px;
@@ -2610,7 +2727,7 @@ export default {
   box-sizing: border-box;
   flex-direction: column;
   justify-content: center;
-  background: #0b120e;
+  background: transparent;
 }
 
 .audio-mark {
