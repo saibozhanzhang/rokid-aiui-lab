@@ -23,7 +23,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.38';
+const APP_VERSION = '1.0.39';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -73,6 +73,10 @@ const PHOTO_CAPTURE_PROFILES = [
 ];
 const BRAND_FOOTNOTE = '只显示在你的乐奇 AI 眼镜里，一起乐在奇中，奇乐无穷！';
 const LEQI_SECRET = 'leqi-aiui-scan-v1';
+const HIDDEN_START = '\u2063';
+const HIDDEN_END = '\u2064';
+const HIDDEN_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-:';
+const HIDDEN_CODEPOINT_BASE = 0xE0100;
 const COPYRIGHT_TEXT = '© 赛博站长';
 const EFFECT_AUDIO = {
   success: '../../assets/success.mp3',
@@ -198,6 +202,23 @@ function decodeLeqiPayload(text) {
   return plain;
 }
 
+function extractHiddenLeqiPayload(text) {
+  const raw = String(text || '');
+  const start = raw.indexOf(HIDDEN_START);
+  const end = start >= 0 ? raw.indexOf(HIDDEN_END, start + HIDDEN_START.length) : -1;
+  const body = start >= 0 && end > start ? raw.slice(start + HIDDEN_START.length, end) : raw;
+  let payload = '';
+  for (let i = 0; i < body.length;) {
+    const code = body.codePointAt(i);
+    i += code > 0xffff ? 2 : 1;
+    const index = code - HIDDEN_CODEPOINT_BASE;
+    if (index >= 0 && index < HIDDEN_ALPHABET.length) {
+      payload += HIDDEN_ALPHABET.charAt(index);
+    }
+  }
+  return isLeqiCipher(payload) ? payload : '';
+}
+
 function xorBytes(bytes, seed) {
   let state = seed >>> 0 || 0x6d2b79f5;
   const out = [];
@@ -319,6 +340,7 @@ function isAudioPayload(text) {
 function classifyQrText(text) {
   const value = String(text || '').trim();
   if (!value) return 'empty';
+  if (isLeqiCipher(secretPayload(value))) return 'secret';
   if (isLeqiCipher(value)) return 'secret';
   if (/^\{/.test(value) && /"(title|body|message|text)"\s*:/.test(value)) return 'secret';
   if (isImagePayload(value)) return 'image';
@@ -810,6 +832,8 @@ function typeLabel(type) {
 
 function secretPayload(text) {
   const value = String(text || '').trim();
+  const hidden = extractHiddenLeqiPayload(value);
+  if (hidden) return hidden;
   return value
     .replace(/^(GLASS-CARD|GLASS-SECRET|GLASS-NOTE|GLASS-LINK|眼镜卡片|眼镜密语|眼镜扫描仪)[:：]\s*/i, '')
     .trim();

@@ -564,7 +564,7 @@
         <section class="panel tools">
           <div class="panel-head">
             <h2 class="panel-title">自己生成</h2>
-            <p class="panel-note">所有类型都会生成乐奇专属密文。手机微信扫出来是乱码，扫一扫会解码成眼镜卡片。</p>
+            <p class="panel-note">所有类型都会生成眼镜专属二维码。手机微信扫码只会看到一句提示，扫一扫会解码成眼镜卡片。</p>
           </div>
           <div class="tabs" id="tabs"></div>
           <form class="form" id="form"></form>
@@ -609,7 +609,7 @@
               <span class="stat-pill" id="payloadBytes">0 字节</span>
               <span id="payloadTip">内容越短，眼镜越容易秒扫。</span>
             </div>
-            <div class="payload-caption">这是二维码真正写入的乐奇密文。手机扫码通常只会看到乱码，扫一扫会解码渲染。</div>
+            <div class="payload-caption">二维码里写入的是一句公开提示和一段隐藏密文。手机扫码只看得到提示，扫一扫会读出隐藏卡片。</div>
             <div class="toast" id="toast"></div>
           </div>
           <div class="glass" id="glassPreview">
@@ -632,6 +632,11 @@
 
   <script>
     const BRAND_FOOT = '只显示在你的乐奇 AI 眼镜里，一起乐在奇中，奇乐无穷！';
+    const PUBLIC_QR_HINT = '你好呀！这个藏在二维码里的小惊喜，只有戴上乐奇 AI 眼镜才能扫出来哦！';
+    const HIDDEN_START = '\u2063';
+    const HIDDEN_END = '\u2064';
+    const HIDDEN_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-:';
+    const HIDDEN_CODEPOINT_BASE = 0xE0100;
 
     const builders = {
       wifi: {
@@ -643,7 +648,7 @@
           { key: 'auth', label: '加密方式', type: 'select', options: [['WPA', 'WPA/WPA2'], ['WEP', 'WEP'], ['nopass', '免密码']] },
           { key: 'hidden', label: '隐藏网络', type: 'checkbox' },
         ],
-        payload: (v) => encodeLeqiPayload({ type: 'wifi', ssid: v.ssid || '', password: v.password || '', auth: v.auth || 'WPA', hidden: !!v.hidden }),
+        payload: (v) => createGlassesQrPayload({ type: 'wifi', ssid: v.ssid || '', password: v.password || '', auth: v.auth || 'WPA', hidden: !!v.hidden }),
         preview: (v) => ({ type: 'Wi-Fi', title: v.ssid || 'Wi-Fi 网络', subtitle: v.auth === 'nopass' ? '免密码' : (v.auth || 'WPA'), body: v.password ? '密码：' + v.password : '没有密码字段', foot: '请在手机或路由器设置里手动连接' }),
       },
       text: {
@@ -653,7 +658,7 @@
           { key: 'title', label: '标题', type: 'text' },
           { key: 'body', label: '正文', type: 'textarea' },
         ],
-        payload: (v) => encodeLeqiPayload({ type: 'card', title: v.title || '眼镜卡片', body: v.body || '' }),
+        payload: (v) => createGlassesQrPayload({ type: 'card', title: v.title || '眼镜卡片', body: v.body || '' }),
         preview: (v) => ({ type: '文字', title: v.title || '眼镜卡片', subtitle: '文字卡片', body: v.body || '', foot: BRAND_FOOT }),
       },
       lqsecret: {
@@ -663,8 +668,8 @@
           { key: 'title', label: '标题', type: 'text' },
           { key: 'body', label: '秘密内容', type: 'textarea' },
         ],
-        payload: (v) => encodeLeqiPayload({ type: 'card', title: v.title || '乐奇密文', body: v.body || '' }),
-        preview: (v) => ({ type: '密文', title: v.title || '乐奇密文', subtitle: '手机扫码只会看到乱码', body: v.body || '', foot: BRAND_FOOT }),
+        payload: (v) => createGlassesQrPayload({ type: 'card', title: v.title || '乐奇密文', body: v.body || '' }),
+        preview: (v) => ({ type: '密文', title: v.title || '乐奇密文', subtitle: '手机扫码只会看到提示语', body: v.body || '', foot: BRAND_FOOT }),
       },
       image: {
         label: '图片',
@@ -673,7 +678,7 @@
           { key: 'url', label: '图片网址', type: 'url', placeholder: 'https://example.com/photo.png' },
           { key: 'title', label: '显示标题', type: 'text', placeholder: '图片已打开' },
         ],
-        payload: (v) => encodeLeqiPayload({ type: 'image', title: v.title || '图片已打开', url: cleanUrl(v.url || '') }),
+        payload: (v) => createGlassesQrPayload({ type: 'image', title: v.title || '图片已打开', url: cleanUrl(v.url || '') }),
         preview: (v) => ({ type: '图片', title: v.title || '图片已打开', subtitle: domainFromUrl(v.url) || '图片链接', body: cleanUrl(v.url || ''), image: imageDisplayUrl(cleanUrl(v.url || '')), foot: isSvgUrl(cleanUrl(v.url || '')) ? 'SVG 会自动转成 PNG 给眼镜显示' : '图片链接越稳定，眼镜显示越顺' }),
       },
       url: {
@@ -683,7 +688,7 @@
           { key: 'title', label: '网站名称 / 功能', type: 'text', placeholder: '例如：AIUI 开发文档' },
           { key: 'url', label: '网址', type: 'url', placeholder: 'https://example.com' },
         ],
-        payload: (v) => encodeLeqiPayload({ type: 'url', title: v.title || domainFromUrl(v.url) || '网址', url: cleanUrl(v.url || '') }),
+        payload: (v) => createGlassesQrPayload({ type: 'url', title: v.title || domainFromUrl(v.url) || '网址', url: cleanUrl(v.url || '') }),
         preview: (v) => ({ type: '链接', title: v.title || domainFromUrl(v.url) || '网址', subtitle: '网站名称 / 功能', body: cleanUrl(v.url || ''), foot: '先看清来源，再决定是否用手机打开' }),
       },
       contact: {
@@ -695,14 +700,14 @@
           { key: 'tel', label: '电话', type: 'tel' },
           { key: 'email', label: '邮箱', type: 'email' },
         ],
-        payload: (v) => encodeLeqiPayload({ type: 'contact', name: safeLine(v.name), org: safeLine(v.org), tel: safeLine(v.tel), email: safeLine(v.email) }),
+        payload: (v) => createGlassesQrPayload({ type: 'contact', name: safeLine(v.name), org: safeLine(v.org), tel: safeLine(v.tel), email: safeLine(v.email) }),
         preview: (v) => ({ type: '名片', title: v.name || '联系人', subtitle: v.org || '名片二维码', body: ['电话：' + (v.tel || ''), '邮箱：' + (v.email || '')].filter(Boolean).join('\n'), foot: '单击继续扫描 · 双击退出' }),
       },
       phone: {
         label: '电话',
         defaults: { tel: '13800000000' },
         fields: [{ key: 'tel', label: '电话号码', type: 'tel' }],
-        payload: (v) => encodeLeqiPayload({ type: 'phone', tel: v.tel || '' }),
+        payload: (v) => createGlassesQrPayload({ type: 'phone', tel: v.tel || '' }),
         preview: (v) => ({ type: '电话', title: v.tel || '电话号码', subtitle: '电话号码', body: '请在手机上拨打或保存', foot: '单击继续扫描 · 双击退出' }),
       },
       email: {
@@ -713,7 +718,7 @@
           { key: 'subject', label: '主题', type: 'text' },
           { key: 'body', label: '正文', type: 'textarea' },
         ],
-        payload: (v) => encodeLeqiPayload({ type: 'email', to: v.to || '', subject: v.subject || '', body: v.body || '' }),
+        payload: (v) => createGlassesQrPayload({ type: 'email', to: v.to || '', subject: v.subject || '', body: v.body || '' }),
         preview: (v) => ({ type: '邮箱', title: v.to || '邮箱', subtitle: v.subject || '邮件地址', body: v.body || '可在手机上发邮件', foot: '单击继续扫描 · 双击退出' }),
       },
       geo: {
@@ -725,7 +730,7 @@
           { key: 'lat', label: '纬度', type: 'text' },
           { key: 'lng', label: '经度', type: 'text' },
         ],
-        payload: (v) => encodeLeqiPayload({ type: 'place', label: v.label || '', address: v.address || '', lat: v.lat || '', lng: v.lng || '' }),
+        payload: (v) => createGlassesQrPayload({ type: 'place', label: v.label || '', address: v.address || '', lat: v.lat || '', lng: v.lng || '' }),
         preview: (v) => ({ type: '目的地', title: v.label || '目的地', subtitle: v.address || [v.lat, v.lng].filter(Boolean).join(','), body: '当前先显示地点信息，未来可接入眼镜导航。', foot: '导航能力接入后可一键前往' }),
       },
       event: {
@@ -737,7 +742,7 @@
           { key: 'end', label: '结束时间', type: 'datetime-local' },
           { key: 'location', label: '地点', type: 'text' },
         ],
-        payload: (v) => encodeLeqiPayload({ type: 'event', title: safeLine(v.title), start: toIcsDate(v.start), end: toIcsDate(v.end), location: safeLine(v.location) }),
+        payload: (v) => createGlassesQrPayload({ type: 'event', title: safeLine(v.title), start: toIcsDate(v.start), end: toIcsDate(v.end), location: safeLine(v.location) }),
         preview: (v) => ({ type: '日程', title: v.title || '日程', subtitle: formatEventRange(v.start, v.end), body: v.location ? '地点：' + v.location : '没有地点字段', foot: '单击继续扫描 · 双击退出' }),
       },
     };
@@ -855,7 +860,11 @@
     function renderPayloadStats(payload) {
       const bytes = new TextEncoder().encode(payload).length;
       el.payloadBytes.textContent = bytes + ' 字节';
-      if (bytes <= 120) {
+      if (payload.indexOf(PUBLIC_QR_HINT) >= 0) {
+        el.payloadTip.textContent = bytes <= 1600
+          ? '手机看到提示语，眼镜读出隐藏卡片。'
+          : '隐藏内容偏长，建议缩短文字或链接。';
+      } else if (bytes <= 120) {
         el.payloadTip.textContent = '非常轻，适合眼镜快速扫描。';
       } else if (bytes <= 320) {
         el.payloadTip.textContent = '长度适中，建议打印清晰一点。';
@@ -1108,6 +1117,25 @@
     }
 
     const LEQI_SECRET = 'leqi-aiui-scan-v1';
+
+    function createGlassesQrPayload(payload) {
+      return wrapHiddenLeqiPayload(encodeLeqiPayload(payload));
+    }
+
+    function wrapHiddenLeqiPayload(leqiPayload) {
+      return PUBLIC_QR_HINT + HIDDEN_START + encodeHiddenLeqiPayload(leqiPayload) + HIDDEN_END;
+    }
+
+    function encodeHiddenLeqiPayload(leqiPayload) {
+      const text = String(leqiPayload || '');
+      let out = '';
+      for (let i = 0; i < text.length; i++) {
+        const index = HIDDEN_ALPHABET.indexOf(text.charAt(i));
+        if (index < 0) throw new Error('unsupported hidden payload char');
+        out += String.fromCodePoint(HIDDEN_CODEPOINT_BASE + index);
+      }
+      return out;
+    }
 
     function encodeLeqiPayload(payload) {
       const plain = JSON.stringify(payload);
