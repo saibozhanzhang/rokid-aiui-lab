@@ -668,13 +668,13 @@
       },
       image: {
         label: '图片',
-        defaults: { url: 'https://dummyimage.com/800x450/041006/40ff5e.png&text=AIUI', title: '图片已打开' },
+        defaults: { url: 'https://static.rokidcdn.com/web_assets/site/static/assets/logo-black-en.15e17.svg', title: 'Rokid Logo' },
         fields: [
-          { key: 'url', label: '图片网址', type: 'url', placeholder: 'https://example.com/photo.jpg' },
+          { key: 'url', label: '图片网址', type: 'url', placeholder: 'https://example.com/photo.png' },
           { key: 'title', label: '显示标题', type: 'text', placeholder: '图片已打开' },
         ],
         payload: (v) => encodeLeqiPayload({ type: 'image', title: v.title || '图片已打开', url: cleanUrl(v.url || '') }),
-        preview: (v) => ({ type: '图片', title: v.title || '图片已打开', subtitle: domainFromUrl(v.url) || '图片链接', body: cleanUrl(v.url || ''), image: cleanUrl(v.url || ''), foot: '图片链接越稳定，眼镜显示越顺' }),
+        preview: (v) => ({ type: '图片', title: v.title || '图片已打开', subtitle: domainFromUrl(v.url) || '图片链接', body: cleanUrl(v.url || ''), image: imageDisplayUrl(cleanUrl(v.url || '')), foot: isSvgUrl(cleanUrl(v.url || '')) ? 'SVG 会自动转成 PNG 给眼镜显示' : '图片链接越稳定，眼镜显示越顺' }),
       },
       url: {
         label: '网址',
@@ -704,16 +704,6 @@
         fields: [{ key: 'tel', label: '电话号码', type: 'tel' }],
         payload: (v) => encodeLeqiPayload({ type: 'phone', tel: v.tel || '' }),
         preview: (v) => ({ type: '电话', title: v.tel || '电话号码', subtitle: '电话号码', body: '请在手机上拨打或保存', foot: '单击继续扫描 · 双击退出' }),
-      },
-      sms: {
-        label: '短信',
-        defaults: { tel: '13800000000', body: '我到了，在门口等你。' },
-        fields: [
-          { key: 'tel', label: '收信号码', type: 'tel' },
-          { key: 'body', label: '短信内容', type: 'textarea' },
-        ],
-        payload: (v) => encodeLeqiPayload({ type: 'sms', tel: v.tel || '', body: v.body || '' }),
-        preview: (v) => ({ type: '短信', title: v.tel || '短信', subtitle: '短信二维码', body: v.body || '没有短信正文', foot: '单击继续扫描 · 双击退出' }),
       },
       email: {
         label: '邮箱',
@@ -748,7 +738,7 @@
           { key: 'location', label: '地点', type: 'text' },
         ],
         payload: (v) => encodeLeqiPayload({ type: 'event', title: safeLine(v.title), start: toIcsDate(v.start), end: toIcsDate(v.end), location: safeLine(v.location) }),
-        preview: (v) => ({ type: '日程', title: v.title || '日程', subtitle: [v.start, v.end ? '至 ' + v.end : ''].filter(Boolean).join(' '), body: v.location ? '地点：' + v.location : '没有地点字段', foot: '单击继续扫描 · 双击退出' }),
+        preview: (v) => ({ type: '日程', title: v.title || '日程', subtitle: formatEventRange(v.start, v.end), body: v.location ? '地点：' + v.location : '没有地点字段', foot: '单击继续扫描 · 双击退出' }),
       },
     };
 
@@ -798,7 +788,7 @@
     }
 
     function renderTabs() {
-      const order = ['wifi', 'lqsecret', 'text', 'image', 'url', 'contact', 'phone', 'sms', 'email', 'geo', 'event'];
+      const order = ['wifi', 'lqsecret', 'text', 'image', 'url', 'contact', 'phone', 'email', 'geo', 'event'];
       el.tabs.innerHTML = order.map((key) => `
         <button class="tab ${key === currentKind ? 'active' : ''}" type="button" data-kind="${key}">
           ${builders[key].label}
@@ -1057,6 +1047,17 @@
       return /^https?:\/\//i.test(value) ? value : 'https://' + value;
     }
 
+    function isSvgUrl(url) {
+      return /^https?:\/\/.+\.svg(?:[?#].*)?$/i.test(String(url || '').trim());
+    }
+
+    function imageDisplayUrl(url) {
+      const clean = cleanUrl(url);
+      if (!isSvgUrl(clean)) return clean;
+      const withoutProtocol = clean.replace(/^https?:\/\//i, '');
+      return 'https://wsrv.nl/?url=' + encodeURIComponent(withoutProtocol) + '&output=png&w=900&bg=fff';
+    }
+
     function domainFromUrl(url) {
       try {
         return new URL(cleanUrl(url)).hostname.replace(/^www\./, '');
@@ -1068,6 +1069,38 @@
     function toIcsDate(value) {
       if (!value) return '';
       return value.replace(/[-:]/g, '').replace(/\.\d+$/, '') + '00';
+    }
+
+    function dateParts(value) {
+      const text = String(value || '').trim();
+      const match = text.match(/^(\d{4})-?(\d{2})-?(\d{2})(?:T?(\d{2}):?(\d{2})(?::?(\d{2}))?)?/);
+      if (!match) return null;
+      return {
+        year: Number(match[1]),
+        month: Number(match[2]),
+        day: Number(match[3]),
+        hour: match[4] !== undefined ? Number(match[4]) : null,
+        minute: match[5] !== undefined ? Number(match[5]) : null
+      };
+    }
+
+    function formatDatePart(parts, withYear) {
+      if (!parts) return '';
+      const date = withYear ? `${parts.year}年${parts.month}月${parts.day}日` : `${parts.month}月${parts.day}日`;
+      if (parts.hour === null) return date;
+      return `${date} ${String(parts.hour).padStart(2, '0')}:${String(parts.minute || 0).padStart(2, '0')}`;
+    }
+
+    function formatEventRange(start, end) {
+      const s = dateParts(start);
+      const e = dateParts(end);
+      if (!s && !e) return '';
+      if (s && e && s.year === e.year && s.month === e.month && s.day === e.day) {
+        const head = formatDatePart(s, true);
+        if (e.hour === null) return head;
+        return `${head} - ${String(e.hour).padStart(2, '0')}:${String(e.minute || 0).padStart(2, '0')}`;
+      }
+      return [formatDatePart(s, true), e ? `至 ${formatDatePart(e, true)}` : ''].filter(Boolean).join(' ');
     }
 
     function safeLine(value) {

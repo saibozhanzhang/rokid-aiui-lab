@@ -23,7 +23,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.37';
+const APP_VERSION = '1.0.38';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -293,6 +293,17 @@ function isAudioUrl(text) {
   return /^https?:\/\/.+\.(mp3|m4a|aac|wav|ogg|flac)(\?.*)?$/i.test(value);
 }
 
+function isSvgUrl(text) {
+  return /^https?:\/\/.+\.svg(?:[?#].*)?$/i.test(String(text || '').trim());
+}
+
+function imageDisplayUrl(text) {
+  const url = stripTypedPrefix(text);
+  if (!isSvgUrl(url)) return url;
+  const withoutProtocol = url.replace(/^https?:\/\//i, '');
+  return 'https://wsrv.nl/?url=' + encodeURIComponent(withoutProtocol) + '&output=png&w=900&bg=fff';
+}
+
 function isImagePayload(text) {
   return /^(IMAGE|IMG|PIC|图片|图像)[:：]/i.test(String(text || '').trim()) || isImageUrl(text);
 }
@@ -402,9 +413,10 @@ function leqiToResult(rawText, base) {
   const kind = cleanField(json && json.type).toLowerCase();
   if (kind === 'image') {
     const url = cleanField(json.url || json.src || json.body || json.text);
+    const renderUrl = cleanField(json.renderUrl || json.displayUrl || json.imageUrl) || imageDisplayUrl(url);
     return {
       ...common,
-      text: url,
+      text: renderUrl,
       type: 'image',
       summary: cleanField(json.title) || '识别到图片，已在眼镜中打开。',
       decodedCard: buildDecodedCard('image', cleanField(json.title) || '图片', domainFromUrl(url) || '图片链接', url, '单击继续扫描 · 双击退出')
@@ -524,7 +536,7 @@ function leqiToResult(rawText, base) {
       text: trimLines(['BEGIN:VEVENT', `SUMMARY:${title}`, start ? `DTSTART:${start}` : '', end ? `DTEND:${end}` : '', location ? `LOCATION:${location}` : '', 'END:VEVENT']),
       type: 'event',
       summary: '这是一个日程二维码。',
-      decodedCard: buildDecodedCard('event', title, trimLines([start, end ? `至 ${end}` : '']).replace(/\n/g, ' '), location ? `地点：${location}` : '没有地点字段', '单击继续扫描 · 双击退出')
+      decodedCard: buildDecodedCard('event', title, formatEventRange(start, end), location ? `地点：${location}` : '没有地点字段', '单击继续扫描 · 双击退出')
     };
   }
 
@@ -921,6 +933,38 @@ function eventField(text, name) {
   return match ? match[1].trim() : '';
 }
 
+function dateParts(value) {
+  const text = String(value || '').trim();
+  const match = text.match(/^(\d{4})-?(\d{2})-?(\d{2})(?:T?(\d{2}):?(\d{2})(?::?(\d{2}))?)?/);
+  if (!match) return null;
+  return {
+    year: Number(match[1]),
+    month: Number(match[2]),
+    day: Number(match[3]),
+    hour: match[4] !== undefined ? Number(match[4]) : null,
+    minute: match[5] !== undefined ? Number(match[5]) : null
+  };
+}
+
+function formatDatePart(parts, withYear) {
+  if (!parts) return '';
+  const date = withYear ? `${parts.year}年${parts.month}月${parts.day}日` : `${parts.month}月${parts.day}日`;
+  if (parts.hour === null) return date;
+  return `${date} ${String(parts.hour).padStart(2, '0')}:${String(parts.minute || 0).padStart(2, '0')}`;
+}
+
+function formatEventRange(start, end) {
+  const s = dateParts(start);
+  const e = dateParts(end);
+  if (!s && !e) return '';
+  if (s && e && s.year === e.year && s.month === e.month && s.day === e.day) {
+    const head = formatDatePart(s, true);
+    if (e.hour === null) return head;
+    return `${head} - ${String(e.hour).padStart(2, '0')}:${String(e.minute || 0).padStart(2, '0')}`;
+  }
+  return trimLines([formatDatePart(s, true), e ? `至 ${formatDatePart(e, true)}` : '']).replace(/\n/g, ' ');
+}
+
 function parseEvent(text) {
   const title = eventField(text, 'SUMMARY') || '日程';
   const start = eventField(text, 'DTSTART');
@@ -929,7 +973,7 @@ function parseEvent(text) {
   return {
     variant: 'event',
     title,
-    subtitle: trimLines([start, end ? `至 ${end}` : '']).replace(/\n/g, ' '),
+    subtitle: formatEventRange(start, end),
     body: location ? `地点：${location}` : '没有地点字段',
     footnote: '单击继续扫描 · 双击退出'
   };
@@ -1209,6 +1253,7 @@ export default {
     showChrome: false,
     showFooter: false,
     showTopbar: true,
+    showImageView: false,
     footerHintText: '单击扫描 · 双击退出',
     exitConfirm: false,
     audioHintText: '',
@@ -1348,6 +1393,7 @@ export default {
         showTopbar: this.data.showTopbar,
         showCamera: this.data.showCamera,
         showTextLayer: this.data.showTextLayer,
+        showImageView: this.data.showImageView,
         mediaMode: this.data.mediaMode,
         mediaUrl: this.data.mediaUrl,
         busy: this.data.busy,
@@ -1362,6 +1408,7 @@ export default {
       showTopbar: false,
       showCamera: false,
       showTextLayer: false,
+      showImageView: false,
       busy: false,
       autoExitText: '双击两次退出'
     });
@@ -1559,6 +1606,7 @@ export default {
       displayMode: 'camera',
       showCamera: true,
       showTextLayer: false,
+      showImageView: false,
       mediaMode: 'text',
       mediaUrl: '',
       cardVariant: 'text',
@@ -1583,6 +1631,7 @@ export default {
           displayMode: 'exit-clear',
           showCamera: false,
           showTextLayer: false,
+          showImageView: false,
           showChrome: false,
           showFooter: false,
           showTopbar: false
@@ -1593,6 +1642,7 @@ export default {
         showCamera: false,
         showTextLayer: true,
         displayMode: 'text',
+        showImageView: false,
         decodeHintText: '乐奇正在解码',
         decodeStepText: '正在识别二维码',
         decodeProgressWidth: 188
@@ -1613,6 +1663,7 @@ export default {
           displayMode: 'exit-clear',
           showCamera: false,
           showTextLayer: false,
+          showImageView: false,
           showChrome: false,
           showFooter: false,
           showTopbar: false
@@ -1628,6 +1679,7 @@ export default {
           displayMode: 'exit-clear',
           showCamera: false,
           showTextLayer: false,
+          showImageView: false,
           showChrome: false,
           showFooter: false,
           showTopbar: false
@@ -1647,6 +1699,7 @@ export default {
         displayMode: 'card',
         showCamera: false,
         showTextLayer: false,
+        showImageView: false,
         mediaMode: 'text',
         mediaUrl: '',
         cardVariant: 'empty',
@@ -1675,6 +1728,7 @@ export default {
       displayMode: 'text',
       showCamera: true,
       showTextLayer: true,
+      showImageView: false,
       mediaMode: 'text',
       mediaUrl: '',
       cardBody: '乐奇正在解码',
@@ -2248,6 +2302,7 @@ export default {
         displayMode: 'exit-clear',
         showCamera: false,
         showTextLayer: false,
+        showImageView: false,
         showChrome: false,
         showFooter: false,
         showTopbar: false
@@ -2261,7 +2316,7 @@ export default {
     const label = typeLabel(result && result.type);
     const mediaMode = found ? mediaModeFor(result && result.type) : 'text';
     const isMedia = mediaMode === 'image' || mediaMode === 'video' || mediaMode === 'audio';
-    const mediaUrl = isMedia ? stripTypedPrefix(text) : '';
+    const mediaUrl = mediaMode === 'image' ? imageDisplayUrl(text) : (isMedia ? stripTypedPrefix(text) : '');
     const resultType = result && result.type;
     const displayMode = !found ? 'card' : (isMedia ? mediaMode : (resultType === 'text' ? 'plain' : 'a2ui'));
     const card = buildCard(found ? text : '', result && result.type, result);
@@ -2285,6 +2340,7 @@ export default {
       displayMode,
       showCamera: false,
       showTextLayer: displayMode === 'text',
+      showImageView: displayMode === 'image',
       mediaMode,
       mediaUrl,
       cardVariant: card.variant || 'text',
@@ -2480,6 +2536,7 @@ export default {
       displayMode: 'exit-clear',
       showCamera: false,
       showTextLayer: false,
+      showImageView: false,
       autoExitText: '正在退出'
     });
     this.runExitApis();
@@ -2502,7 +2559,7 @@ export default {
         <text class="intro-action">双击退出</text>
       </view>
       <camera id="secretCamera" class="camera-probe" ink:if="{{showCamera}}"></camera>
-      <image class="media-image" src="{{mediaUrl}}" mode="aspectFit" ink:if="{{displayMode === 'image'}}"></image>
+      <image class="media-image" src="{{mediaUrl}}" mode="aspectFit" ink:if="{{showImageView}}"></image>
       <video class="media-video" src="{{mediaUrl}}" autoplay controls ink:if="{{displayMode === 'video'}}"></video>
       <view class="audio-panel" ink:if="{{displayMode === 'audio'}}">
         <text class="audio-mark">ON AIR</text>
