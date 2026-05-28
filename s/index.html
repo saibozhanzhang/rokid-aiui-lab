@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>乐奇 AI 眼镜专属惊喜</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f7f8f5;
+      color: #101510;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      background:
+        radial-gradient(circle at 50% 16%, rgba(64,255,94,.16), transparent 34%),
+        linear-gradient(180deg, #ffffff 0%, #eef5ec 100%);
+    }
+    main {
+      width: min(520px, 100%);
+      display: grid;
+      gap: 18px;
+      text-align: center;
+    }
+    .badge {
+      justify-self: center;
+      padding: 8px 13px;
+      border: 1px solid rgba(28, 151, 54, .24);
+      border-radius: 999px;
+      color: #16852d;
+      font-size: 14px;
+      font-weight: 800;
+      background: rgba(255,255,255,.72);
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 8vw, 48px);
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+    p {
+      margin: 0;
+      font-size: clamp(20px, 5vw, 28px);
+      line-height: 1.45;
+      font-weight: 800;
+    }
+    .hint {
+      color: #516154;
+      font-size: 15px;
+      line-height: 1.7;
+      font-weight: 600;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { background: #020703; color: #f4fff4; }
+      body {
+        background:
+          radial-gradient(circle at 50% 14%, rgba(64,255,94,.18), transparent 35%),
+          linear-gradient(180deg, #071109 0%, #020703 100%);
+      }
+      .badge { background: rgba(9,24,12,.9); color: #40ff5e; border-color: rgba(64,255,94,.32); }
+      .hint { color: #95b49c; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="badge">FOR ROKID GLASSES</div>
+    <h1>小惊喜已藏好</h1>
+    <p>你好呀！这个藏在二维码里的小惊喜，只有戴上乐奇 AI 眼镜才能扫出来哦！</p>
+    <div class="hint">打开乐奇 AI 眼镜里的「扫一扫」，再看向这个二维码。</div>
+  </main>
+</body>
+</html>
