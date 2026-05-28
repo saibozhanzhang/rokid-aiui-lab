@@ -23,7 +23,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.36';
+const APP_VERSION = '1.0.37';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -344,10 +344,212 @@ function summarizeQrText(text, type) {
   return '文字已识别。';
 }
 
+function cleanField(value) {
+  return String(value || '').trim();
+}
+
+function leqiDecodeToJson(text) {
+  const payload = secretPayload(text);
+  if (!isLeqiCipher(payload)) return null;
+  const plain = decodeLeqiPayload(payload);
+  if (/^\s*\{/.test(plain)) {
+    return JSON.parse(plain);
+  }
+  return {
+    type: 'card',
+    title: '乐奇密文',
+    body: plain
+  };
+}
+
+function buildDecodedCard(variant, title, subtitle, body, footnote) {
+  return {
+    variant,
+    title: clampText(title || typeLabel(variant), 24),
+    subtitle: clampText(subtitle || '', 34),
+    body: clampText(body || '', 120),
+    footnote: footnote || '单击继续扫描 · 双击退出'
+  };
+}
+
+function leqiToResult(rawText, base) {
+  if (!isLeqiCipher(secretPayload(rawText))) return null;
+  const common = {
+    ...(base || {}),
+    found: true,
+    provider: base && base.provider ? base.provider : 'rokid-barcode',
+    rawPreview: 'LQ1 乐奇密文'
+  };
+  let json;
+  try {
+    json = leqiDecodeToJson(rawText);
+  } catch (err) {
+    return {
+      ...common,
+      text: rawText,
+      type: 'secret',
+      summary: '这枚乐奇密文暂时无法解开。',
+      decodedCard: buildDecodedCard(
+        'secret',
+        '密文无法解码',
+        '',
+        '这枚二维码不是当前版本的乐奇密文，或内容已经损坏。',
+        '单击再扫一次 · 双击退出'
+      )
+    };
+  }
+
+  const kind = cleanField(json && json.type).toLowerCase();
+  if (kind === 'image') {
+    const url = cleanField(json.url || json.src || json.body || json.text);
+    return {
+      ...common,
+      text: url,
+      type: 'image',
+      summary: cleanField(json.title) || '识别到图片，已在眼镜中打开。',
+      decodedCard: buildDecodedCard('image', cleanField(json.title) || '图片', domainFromUrl(url) || '图片链接', url, '单击继续扫描 · 双击退出')
+    };
+  }
+  if (kind === 'url' || kind === 'link') {
+    const url = cleanField(json.url || json.href || json.body || json.text);
+    return {
+      ...common,
+      text: url,
+      type: 'url',
+      summary: '识别到网址，可用眼镜先看一眼。',
+      decodedCard: buildDecodedCard(
+        'url',
+        cleanField(json.title) || domainFromUrl(url) || '网址',
+        cleanField(json.subtitle) || '网站名称 / 功能',
+        url,
+        '先看清来源，再决定是否用手机打开'
+      )
+    };
+  }
+  if (kind === 'wifi') {
+    const ssid = cleanField(json.ssid);
+    const auth = cleanField(json.auth || json.encryption || json.t) || 'WPA';
+    const password = cleanField(json.password || json.pass || json.p);
+    return {
+      ...common,
+      text: `WIFI:T:${auth};S:${ssid};P:${password};H:${json.hidden ? 'true' : 'false'};;`,
+      type: 'wifi',
+      summary: '这是一个 Wi-Fi 二维码。',
+      decodedCard: buildDecodedCard(
+        'wifi',
+        ssid || 'Wi-Fi 网络',
+        auth === 'nopass' ? '免密码' : auth,
+        trimLines([
+          password ? `密码：${password}` : '没有密码字段',
+          json.hidden ? '隐藏网络：是' : ''
+        ]),
+        '请在手机或路由器设置里手动连接'
+      )
+    };
+  }
+  if (kind === 'contact' || kind === 'vcard') {
+    const name = cleanField(json.name || json.fn);
+    const org = cleanField(json.org || json.company);
+    const tel = cleanField(json.tel || json.phone);
+    const email = cleanField(json.email || json.mail);
+    return {
+      ...common,
+      text: trimLines(['BEGIN:VCARD', 'VERSION:3.0', `FN:${name}`, org ? `ORG:${org}` : '', tel ? `TEL:${tel}` : '', email ? `EMAIL:${email}` : '', 'END:VCARD']),
+      type: 'contact',
+      summary: '这是一个联系人二维码。',
+      decodedCard: buildDecodedCard('contact', name || '联系人', org || '名片二维码', trimLines([tel ? `电话：${tel}` : '', email ? `邮箱：${email}` : '']), '单击继续扫描 · 双击退出')
+    };
+  }
+  if (kind === 'phone') {
+    const tel = cleanField(json.tel || json.phone);
+    return {
+      ...common,
+      text: `tel:${tel}`,
+      type: 'phone',
+      summary: '这是一个电话二维码。',
+      decodedCard: buildDecodedCard('phone', tel || '电话号码', '电话号码', '请在手机上拨打或保存', '单击继续扫描 · 双击退出')
+    };
+  }
+  if (kind === 'sms') {
+    const tel = cleanField(json.tel || json.phone);
+    const body = cleanField(json.body || json.message || json.text);
+    return {
+      ...common,
+      text: `SMSTO:${tel}:${body}`,
+      type: 'sms',
+      summary: '这是一个短信二维码。',
+      decodedCard: buildDecodedCard('sms', tel || '短信', '短信二维码', body || '没有短信正文', '单击继续扫描 · 双击退出')
+    };
+  }
+  if (kind === 'email' || kind === 'mail') {
+    const to = cleanField(json.to || json.email);
+    const subject = cleanField(json.subject);
+    const body = cleanField(json.body || json.message || json.text);
+    const query = trimLines([subject ? `subject=${encodeURIComponent(subject)}` : '', body ? `body=${encodeURIComponent(body)}` : '']).replace(/\n/g, '&');
+    return {
+      ...common,
+      text: `mailto:${to}${query ? '?' + query : ''}`,
+      type: 'email',
+      summary: '这是一个邮箱二维码。',
+      decodedCard: buildDecodedCard('email', to || '邮箱', subject || '邮件地址', body || '可在手机上发邮件', '单击继续扫描 · 双击退出')
+    };
+  }
+  if (kind === 'place' || kind === 'geo' || kind === 'location') {
+    const title = cleanField(json.label || json.title || json.name) || '目的地';
+    const address = cleanField(json.address || json.note);
+    const lat = cleanField(json.lat || json.latitude);
+    const lng = cleanField(json.lng || json.lon || json.longitude);
+    const coords = lat && lng ? `${lat},${lng}` : '';
+    return {
+      ...common,
+      text: coords ? `geo:${coords}?q=${encodeURIComponent(title)}` : title,
+      type: 'geo',
+      summary: '这是一个位置二维码。',
+      decodedCard: buildDecodedCard(
+        'geo',
+        title,
+        address || coords || '目的地',
+        coords ? `坐标：${coords}` : '当前先显示地点信息，未来可接入眼镜导航。',
+        '导航能力接入后可一键前往'
+      )
+    };
+  }
+  if (kind === 'event' || kind === 'calendar') {
+    const title = cleanField(json.title || json.summary) || '日程';
+    const start = cleanField(json.start);
+    const end = cleanField(json.end);
+    const location = cleanField(json.location || json.address);
+    return {
+      ...common,
+      text: trimLines(['BEGIN:VEVENT', `SUMMARY:${title}`, start ? `DTSTART:${start}` : '', end ? `DTEND:${end}` : '', location ? `LOCATION:${location}` : '', 'END:VEVENT']),
+      type: 'event',
+      summary: '这是一个日程二维码。',
+      decodedCard: buildDecodedCard('event', title, trimLines([start, end ? `至 ${end}` : '']).replace(/\n/g, ' '), location ? `地点：${location}` : '没有地点字段', '单击继续扫描 · 双击退出')
+    };
+  }
+
+  const body = cleanField(json.body || json.text || json.message || '');
+  return {
+    ...common,
+    text: body,
+    type: 'secret',
+    summary: '这是乐奇密文，已在眼镜里解码。',
+    decodedCard: buildDecodedCard(
+      'secret',
+      cleanField(json.title) || '乐奇密文',
+      '乐奇专属',
+      body,
+      BRAND_FOOTNOTE
+    )
+  };
+}
+
 function normalizeDecodeResult(data) {
   const raw = parseData(data);
   if (raw && raw.found !== undefined) {
     const rawText = String(raw.text || '').trim();
+    const leqi = leqiToResult(rawText, raw);
+    if (leqi) return leqi;
     const rawType = classifyQrText(rawText);
     return {
       ...raw,
@@ -359,6 +561,8 @@ function normalizeDecodeResult(data) {
   }
   const result = raw && (raw.result || raw.data || raw.text || raw.content);
   const text = typeof result === 'string' ? result.trim() : '';
+  const leqi = leqiToResult(text, { provider: raw && raw.provider ? raw.provider : 'fallback-service' });
+  if (leqi) return leqi;
   const type = classifyQrText(text);
   return {
     found: !!text,
@@ -372,6 +576,13 @@ function normalizeDecodeResult(data) {
 
 function normalizeBarcodeResult(barcode) {
   const text = String(barcode && barcode.rawValue || '').trim();
+  const leqi = leqiToResult(text, {
+    provider: 'rokid-barcode',
+    rawFormat: barcode && barcode.format ? barcode.format : 'unknown',
+    boundingBox: barcode && barcode.boundingBox,
+    cornerPoints: barcode && barcode.cornerPoints
+  });
+  if (leqi) return leqi;
   const type = classifyQrText(text);
   return {
     found: !!text,
@@ -773,6 +984,7 @@ function parseSecret(text) {
 }
 
 function buildCard(text, type, result) {
+  if (result && result.decodedCard) return result.decodedCard;
   const value = String(text || '').trim();
   if (!value) {
     return {

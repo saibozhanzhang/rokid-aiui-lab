@@ -324,6 +324,77 @@
       line-height: 1.45;
     }
 
+    .save-panel {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fbfdfb;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .save-panel[hidden] {
+      display: none;
+    }
+
+    .save-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .save-title {
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.35;
+      font-weight: 820;
+    }
+
+    .save-close {
+      border: 0;
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      background: var(--soft);
+      color: var(--green-dark);
+      font-weight: 900;
+    }
+
+    .save-preview {
+      width: min(240px, 100%);
+      aspect-ratio: 1;
+      justify-self: center;
+      object-fit: contain;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #ffffff;
+      padding: 10px;
+    }
+
+    .save-link {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 40px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: var(--soft);
+      color: var(--green-dark);
+      border: 1px solid #cceacc;
+      font-size: 14px;
+      font-weight: 780;
+      text-decoration: none;
+    }
+
+    .save-hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      text-align: center;
+    }
+
     .payload-stats {
       width: 100%;
       display: flex;
@@ -493,7 +564,7 @@
         <section class="panel tools">
           <div class="panel-head">
             <h2 class="panel-title">自己生成</h2>
-            <p class="panel-note">优先提供扫一扫里显示效果稳定的类型。Wi-Fi、名片、网址、日程等会走结构化 GUI。</p>
+            <p class="panel-note">所有类型都会生成乐奇专属密文。手机微信扫出来是乱码，扫一扫会解码成眼镜卡片。</p>
           </div>
           <div class="tabs" id="tabs"></div>
           <form class="form" id="form"></form>
@@ -504,7 +575,7 @@
           <div class="idea-grid">
             <div class="idea"><strong>家里 Wi-Fi 贴</strong><span>朋友来家里，戴眼镜一扫就知道网络名和密码。</span></div>
             <div class="idea"><strong>聚会暗号</strong><span>吧台、餐桌、生日卡片里藏一句只有眼镜能看的话。</span></div>
-            <div class="idea"><strong>摊位信息牌</strong><span>二维码贴在杯子、菜单、展台上，扫到说明、图片或联系方式。</span></div>
+            <div class="idea"><strong>摊位信息牌</strong><span>二维码贴在杯子、菜单、展台上，手机看不懂，眼镜扫出说明、图片或联系方式。</span></div>
             <div class="idea"><strong>交换名片</strong><span>把电话、邮箱、身份做成清爽名片卡，一扫就能看懂。</span></div>
           </div>
         </section>
@@ -524,12 +595,21 @@
               <button class="action secondary" id="copyPayload" type="button">复制内容</button>
               <button class="action secondary" id="resetCurrent" type="button">恢复示例</button>
             </div>
+            <div class="save-panel" id="savePanel" hidden>
+              <div class="save-head">
+                <strong class="save-title" id="saveTitle">文件已生成</strong>
+                <button class="save-close" id="saveClose" type="button" aria-label="关闭保存面板">×</button>
+              </div>
+              <img class="save-preview" id="savePreview" alt="二维码保存预览">
+              <a class="save-link" id="saveLink" href="#" download>打开 / 保存文件</a>
+              <div class="save-hint" id="saveHint">如果没有自动下载，请点上方按钮保存。</div>
+            </div>
             <textarea class="payload" id="payload" readonly></textarea>
             <div class="payload-stats">
               <span class="stat-pill" id="payloadBytes">0 字节</span>
               <span id="payloadTip">内容越短，眼镜越容易秒扫。</span>
             </div>
-            <div class="payload-caption">这是二维码真正写入的内容。用「扫一扫」扫它，就会按对应格式渲染。</div>
+            <div class="payload-caption">这是二维码真正写入的乐奇密文。手机扫码通常只会看到乱码，扫一扫会解码渲染。</div>
             <div class="toast" id="toast"></div>
           </div>
           <div class="glass" id="glassPreview">
@@ -563,14 +643,7 @@
           { key: 'auth', label: '加密方式', type: 'select', options: [['WPA', 'WPA/WPA2'], ['WEP', 'WEP'], ['nopass', '免密码']] },
           { key: 'hidden', label: '隐藏网络', type: 'checkbox' },
         ],
-        payload: (v) => {
-          const auth = v.auth || 'WPA';
-          const parts = ['WIFI:', 'T:' + auth + ';', 'S:' + wifiEscape(v.ssid || '') + ';'];
-          if (auth !== 'nopass' && v.password) parts.push('P:' + wifiEscape(v.password) + ';');
-          if (v.hidden) parts.push('H:true;');
-          parts.push(';');
-          return parts.join('');
-        },
+        payload: (v) => encodeLeqiPayload({ type: 'wifi', ssid: v.ssid || '', password: v.password || '', auth: v.auth || 'WPA', hidden: !!v.hidden }),
         preview: (v) => ({ type: 'Wi-Fi', title: v.ssid || 'Wi-Fi 网络', subtitle: v.auth === 'nopass' ? '免密码' : (v.auth || 'WPA'), body: v.password ? '密码：' + v.password : '没有密码字段', foot: '请在手机或路由器设置里手动连接' }),
       },
       text: {
@@ -580,7 +653,7 @@
           { key: 'title', label: '标题', type: 'text' },
           { key: 'body', label: '正文', type: 'textarea' },
         ],
-        payload: (v) => 'GLASS-SECRET:' + JSON.stringify({ title: v.title || '眼镜卡片', body: v.body || '' }),
+        payload: (v) => encodeLeqiPayload({ type: 'card', title: v.title || '眼镜卡片', body: v.body || '' }),
         preview: (v) => ({ type: '文字', title: v.title || '眼镜卡片', subtitle: '文字卡片', body: v.body || '', foot: BRAND_FOOT }),
       },
       lqsecret: {
@@ -600,7 +673,7 @@
           { key: 'url', label: '图片网址', type: 'url', placeholder: 'https://example.com/photo.jpg' },
           { key: 'title', label: '显示标题', type: 'text', placeholder: '图片已打开' },
         ],
-        payload: (v) => 'IMAGE:' + cleanUrl(v.url || ''),
+        payload: (v) => encodeLeqiPayload({ type: 'image', title: v.title || '图片已打开', url: cleanUrl(v.url || '') }),
         preview: (v) => ({ type: '图片', title: v.title || '图片已打开', subtitle: domainFromUrl(v.url) || '图片链接', body: cleanUrl(v.url || ''), image: cleanUrl(v.url || ''), foot: '图片链接越稳定，眼镜显示越顺' }),
       },
       url: {
@@ -610,7 +683,7 @@
           { key: 'title', label: '网站名称 / 功能', type: 'text', placeholder: '例如：AIUI 开发文档' },
           { key: 'url', label: '网址', type: 'url', placeholder: 'https://example.com' },
         ],
-        payload: (v) => 'GLASS-LINK:' + JSON.stringify({ type: 'url', title: v.title || domainFromUrl(v.url) || '网址', body: cleanUrl(v.url || ''), url: cleanUrl(v.url || '') }),
+        payload: (v) => encodeLeqiPayload({ type: 'url', title: v.title || domainFromUrl(v.url) || '网址', url: cleanUrl(v.url || '') }),
         preview: (v) => ({ type: '链接', title: v.title || domainFromUrl(v.url) || '网址', subtitle: '网站名称 / 功能', body: cleanUrl(v.url || ''), foot: '先看清来源，再决定是否用手机打开' }),
       },
       contact: {
@@ -622,14 +695,14 @@
           { key: 'tel', label: '电话', type: 'tel' },
           { key: 'email', label: '邮箱', type: 'email' },
         ],
-        payload: (v) => ['BEGIN:VCARD', 'VERSION:3.0', 'FN:' + safeLine(v.name), 'ORG:' + safeLine(v.org), 'TEL:' + safeLine(v.tel), 'EMAIL:' + safeLine(v.email), 'END:VCARD'].join('\n'),
+        payload: (v) => encodeLeqiPayload({ type: 'contact', name: safeLine(v.name), org: safeLine(v.org), tel: safeLine(v.tel), email: safeLine(v.email) }),
         preview: (v) => ({ type: '名片', title: v.name || '联系人', subtitle: v.org || '名片二维码', body: ['电话：' + (v.tel || ''), '邮箱：' + (v.email || '')].filter(Boolean).join('\n'), foot: '单击继续扫描 · 双击退出' }),
       },
       phone: {
         label: '电话',
         defaults: { tel: '13800000000' },
         fields: [{ key: 'tel', label: '电话号码', type: 'tel' }],
-        payload: (v) => 'tel:' + (v.tel || ''),
+        payload: (v) => encodeLeqiPayload({ type: 'phone', tel: v.tel || '' }),
         preview: (v) => ({ type: '电话', title: v.tel || '电话号码', subtitle: '电话号码', body: '请在手机上拨打或保存', foot: '单击继续扫描 · 双击退出' }),
       },
       sms: {
@@ -639,7 +712,7 @@
           { key: 'tel', label: '收信号码', type: 'tel' },
           { key: 'body', label: '短信内容', type: 'textarea' },
         ],
-        payload: (v) => 'SMSTO:' + (v.tel || '') + ':' + (v.body || ''),
+        payload: (v) => encodeLeqiPayload({ type: 'sms', tel: v.tel || '', body: v.body || '' }),
         preview: (v) => ({ type: '短信', title: v.tel || '短信', subtitle: '短信二维码', body: v.body || '没有短信正文', foot: '单击继续扫描 · 双击退出' }),
       },
       email: {
@@ -650,19 +723,20 @@
           { key: 'subject', label: '主题', type: 'text' },
           { key: 'body', label: '正文', type: 'textarea' },
         ],
-        payload: (v) => 'mailto:' + encodeURIComponent(v.to || '') + '?subject=' + encodeURIComponent(v.subject || '') + '&body=' + encodeURIComponent(v.body || ''),
+        payload: (v) => encodeLeqiPayload({ type: 'email', to: v.to || '', subject: v.subject || '', body: v.body || '' }),
         preview: (v) => ({ type: '邮箱', title: v.to || '邮箱', subtitle: v.subject || '邮件地址', body: v.body || '可在手机上发邮件', foot: '单击继续扫描 · 双击退出' }),
       },
       geo: {
-        label: '位置',
-        defaults: { label: '杭州西湖', lat: '30.2427', lng: '120.1508' },
+        label: '目的地',
+        defaults: { label: '杭州西湖', address: '杭州市西湖区西湖风景名胜区', lat: '30.2427', lng: '120.1508' },
         fields: [
           { key: 'label', label: '地点名称', type: 'text' },
+          { key: 'address', label: '地址 / 备注', type: 'text' },
           { key: 'lat', label: '纬度', type: 'text' },
           { key: 'lng', label: '经度', type: 'text' },
         ],
-        payload: (v) => 'geo:' + (v.lat || '') + ',' + (v.lng || '') + '?q=' + encodeURIComponent(v.label || ''),
-        preview: (v) => ({ type: '位置', title: v.label || '位置', subtitle: [v.lat, v.lng].filter(Boolean).join(','), body: '可在地图里搜索这个位置', foot: '单击继续扫描 · 双击退出' }),
+        payload: (v) => encodeLeqiPayload({ type: 'place', label: v.label || '', address: v.address || '', lat: v.lat || '', lng: v.lng || '' }),
+        preview: (v) => ({ type: '目的地', title: v.label || '目的地', subtitle: v.address || [v.lat, v.lng].filter(Boolean).join(','), body: '当前先显示地点信息，未来可接入眼镜导航。', foot: '导航能力接入后可一键前往' }),
       },
       event: {
         label: '日程',
@@ -673,14 +747,16 @@
           { key: 'end', label: '结束时间', type: 'datetime-local' },
           { key: 'location', label: '地点', type: 'text' },
         ],
-        payload: (v) => ['BEGIN:VEVENT', 'SUMMARY:' + safeLine(v.title), 'DTSTART:' + toIcsDate(v.start), 'DTEND:' + toIcsDate(v.end), 'LOCATION:' + safeLine(v.location), 'END:VEVENT'].join('\n'),
+        payload: (v) => encodeLeqiPayload({ type: 'event', title: safeLine(v.title), start: toIcsDate(v.start), end: toIcsDate(v.end), location: safeLine(v.location) }),
         preview: (v) => ({ type: '日程', title: v.title || '日程', subtitle: [v.start, v.end ? '至 ' + v.end : ''].filter(Boolean).join(' '), body: v.location ? '地点：' + v.location : '没有地点字段', foot: '单击继续扫描 · 双击退出' }),
       },
     };
 
     let currentKind = 'wifi';
     let values = structuredClone(builders.wifi.defaults);
+    let currentQr = null;
     let currentSvg = '';
+    let currentSaveUrl = '';
 
     const el = {
       tabs: document.getElementById('tabs'),
@@ -700,6 +776,12 @@
       downloadSvg: document.getElementById('downloadSvg'),
       copyPayload: document.getElementById('copyPayload'),
       resetCurrent: document.getElementById('resetCurrent'),
+      savePanel: document.getElementById('savePanel'),
+      saveTitle: document.getElementById('saveTitle'),
+      savePreview: document.getElementById('savePreview'),
+      saveLink: document.getElementById('saveLink'),
+      saveHint: document.getElementById('saveHint'),
+      saveClose: document.getElementById('saveClose'),
     };
 
     function init() {
@@ -712,6 +794,7 @@
       el.downloadPng.addEventListener('click', downloadPng);
       el.copyPayload.addEventListener('click', copyPayload);
       el.resetCurrent.addEventListener('click', resetCurrent);
+      el.saveClose.addEventListener('click', hideSavePanel);
     }
 
     function renderTabs() {
@@ -797,11 +880,15 @@
         const qr = qrcode(0, 'M');
         qr.addData(payload, 'Byte');
         qr.make();
+        currentQr = qr;
         currentSvg = qr.createSvgTag({ cellSize: 8, margin: 4, scalable: true });
         el.qrBox.innerHTML = currentSvg;
+        hideSavePanel();
       } catch (error) {
         el.qrBox.innerHTML = '<div class="payload-caption">内容太长了，试着缩短一点。</div>';
+        currentQr = null;
         currentSvg = '';
+        hideSavePanel();
       }
     }
 
@@ -822,38 +909,26 @@
       el.previewFoot.textContent = data.foot || '单击继续扫描 · 双击退出';
     }
 
-    function downloadSvg() {
+    async function downloadSvg() {
       if (!currentSvg) return;
-      const blob = new Blob([currentSvg], { type: 'image/svg+xml;charset=utf-8' });
-      downloadBlob(blob, filename('svg'));
+      const name = filename('svg');
+      const svg = savableSvg();
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+      showSavePanel({ blob, dataUrl, name, label: 'SVG' });
+      triggerDownload(blob, name);
       flash('SVG 已生成');
     }
 
-    function downloadPng() {
-      if (!currentSvg) return;
-      const svgBlob = new Blob([currentSvg], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(svgBlob);
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 1024;
-        canvas.height = 1024;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        URL.revokeObjectURL(url);
-        canvas.toBlob((blob) => {
-          if (!blob) return;
-          downloadBlob(blob, filename('png'));
-          flash('PNG 已生成');
-        }, 'image/png');
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        flash('PNG 生成失败，先下载 SVG');
-      };
-      img.src = url;
+    async function downloadPng() {
+      if (!currentQr) return;
+      const name = filename('png');
+      const canvas = drawQrCanvas(1024);
+      const dataUrl = canvas.toDataURL('image/png');
+      const blob = await canvasToBlob(canvas);
+      showSavePanel({ blob, dataUrl, name, label: 'PNG' });
+      if (blob) triggerDownload(blob, name);
+      flash('PNG 已生成');
     }
 
     async function copyPayload() {
@@ -867,7 +942,8 @@
       }
     }
 
-    function downloadBlob(blob, name) {
+    function triggerDownload(blob, name) {
+      if (!blob) return;
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -875,7 +951,89 @@
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    }
+
+    function showSavePanel(file) {
+      cleanupSaveUrl();
+      const href = file.blob ? URL.createObjectURL(file.blob) : file.dataUrl;
+      if (file.blob) currentSaveUrl = href;
+      el.saveTitle.textContent = `${file.label} 已生成`;
+      el.savePreview.src = file.dataUrl || href;
+      el.saveLink.href = href;
+      el.saveLink.download = file.name;
+      el.saveLink.textContent = `打开 / 保存 ${file.label}`;
+      el.saveHint.textContent = isLikelyMobile()
+        ? '手机上如果没有弹出下载，请长按上方二维码图片保存，或点“打开 / 保存”后保存。'
+        : '如果浏览器没有自动下载，请点“打开 / 保存”手动保存。';
+      el.savePanel.hidden = false;
+    }
+
+    function hideSavePanel() {
+      if (!el.savePanel) return;
+      el.savePanel.hidden = true;
+      el.savePreview.removeAttribute('src');
+      el.saveLink.removeAttribute('href');
+      cleanupSaveUrl();
+    }
+
+    function cleanupSaveUrl() {
+      if (currentSaveUrl) {
+        URL.revokeObjectURL(currentSaveUrl);
+        currentSaveUrl = '';
+      }
+    }
+
+    function drawQrCanvas(targetSize) {
+      const moduleCount = currentQr.getModuleCount();
+      const marginModules = 4;
+      const cellSize = Math.max(1, Math.floor(targetSize / (moduleCount + marginModules * 2)));
+      const size = cellSize * (moduleCount + marginModules * 2);
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#000000';
+      for (let row = 0; row < moduleCount; row++) {
+        for (let col = 0; col < moduleCount; col++) {
+          if (currentQr.isDark(row, col)) {
+            ctx.fillRect((col + marginModules) * cellSize, (row + marginModules) * cellSize, cellSize, cellSize);
+          }
+        }
+      }
+      return canvas;
+    }
+
+    function canvasToBlob(canvas) {
+      return new Promise((resolve) => {
+        if (!canvas.toBlob) {
+          resolve(dataUrlToBlob(canvas.toDataURL('image/png')));
+          return;
+        }
+        canvas.toBlob((blob) => resolve(blob || dataUrlToBlob(canvas.toDataURL('image/png'))), 'image/png');
+      });
+    }
+
+    function dataUrlToBlob(dataUrl) {
+      const parts = dataUrl.split(',');
+      const meta = parts[0].match(/data:([^;]+)/);
+      const binary = atob(parts[1] || '');
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return new Blob([bytes], { type: meta ? meta[1] : 'application/octet-stream' });
+    }
+
+    function savableSvg() {
+      const svg = currentSvg || '';
+      if (/<rect[^>]+fill="#ffffff"/i.test(svg)) return svg;
+      return svg.replace(/(<svg[^>]*>)/i, '$1<rect width="100%" height="100%" fill="#ffffff"/>');
+    }
+
+    function isLikelyMobile() {
+      return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
     }
 
     function filename(ext) {
