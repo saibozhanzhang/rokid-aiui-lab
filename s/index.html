@@ -3,59 +3,66 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="light">
   <title>乐奇 AI 眼镜专属惊喜</title>
   <style>
     :root {
-      color-scheme: light dark;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
-      background: #f4f7f2;
+      background: #f6f7f3;
       color: #101510;
-      --page-pad: clamp(16px, 4vw, 40px);
+      --pad: clamp(16px, 4vw, 44px);
+      --green: #20d24d;
+      --deep: #071109;
+      --jd: #e1251b;
     }
     * { box-sizing: border-box; }
     html, body { max-width: 100%; overflow-x: hidden; }
     body {
       margin: 0;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: var(--page-pad);
-      background: linear-gradient(180deg, #ffffff 0%, #edf4ec 100%);
+      padding: var(--pad);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(32, 210, 77, .16), transparent 30%),
+        radial-gradient(circle at 92% 4%, rgba(225, 37, 27, .12), transparent 28%),
+        linear-gradient(180deg, #ffffff 0%, #eef4ec 100%);
     }
     main {
-      width: min(calc(100vw - var(--page-pad) - var(--page-pad)), 360px);
-      min-width: 0;
-      max-width: 980px;
+      width: min(calc(100vw - var(--pad) - var(--pad)), 348px);
+      max-width: 1120px;
+      margin: 0 auto;
       display: grid;
-      gap: 0;
-      text-align: center;
+      gap: clamp(14px, 3vw, 22px);
+    }
+    .hero, .buy {
       overflow: hidden;
-      border: 1px solid rgba(27, 68, 35, .08);
-      border-radius: 30px;
-      background: rgba(255, 255, 255, .86);
-      box-shadow: 0 24px 64px rgba(21, 67, 30, .14);
+      border: 1px solid rgba(17, 35, 24, .08);
+      border-radius: clamp(24px, 5vw, 36px);
+      background: rgba(255, 255, 255, .9);
+      box-shadow: 0 24px 70px rgba(21, 67, 30, .13);
     }
     .hero {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+    .visual {
       position: relative;
-      min-height: clamp(230px, 58vw, 360px);
+      min-height: clamp(220px, 58vw, 390px);
       display: grid;
       align-items: end;
       overflow: hidden;
-      background: linear-gradient(135deg, #f8faf7 0%, #dcebdd 100%);
+      background: linear-gradient(135deg, #f9fbf8 0%, #dcebdd 100%);
     }
-    .product {
+    .visual img {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       object-fit: contain;
-      object-position: center 44%;
-      padding: clamp(10px, 3vw, 24px) 0 54px;
-      transform: scale(1.16);
+      object-position: center 42%;
+      padding: 18px 0 46px;
+      transform: scale(1.14);
     }
-    .hero-copy {
+    .visual-title {
       position: relative;
       z-index: 1;
       display: grid;
@@ -64,37 +71,78 @@
       padding: 26px 22px 24px;
       background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.9) 58%, #fff 100%);
     }
-    .content {
-      display: grid;
-      gap: 18px;
-      justify-items: stretch;
-      padding: clamp(20px, 5vw, 36px);
-      min-width: 0;
-    }
     .badge {
-      justify-self: center;
+      display: inline-flex;
+      align-items: center;
+      width: max-content;
+      max-width: 100%;
       padding: 8px 13px;
       border: 1px solid rgba(28, 151, 54, .24);
       border-radius: 999px;
       color: #16852d;
       font-size: 14px;
-      font-weight: 800;
-      background: rgba(255,255,255,.72);
+      font-weight: 900;
+      background: rgba(255,255,255,.78);
     }
+    h1, h2, p { margin: 0; }
     h1 {
-      margin: 0;
-      font-size: clamp(30px, 8vw, 48px);
-      line-height: 1.1;
+      font-size: clamp(34px, 9vw, 62px);
+      line-height: 1.06;
       letter-spacing: 0;
     }
-    p {
-      margin: 0;
-      font-size: clamp(19px, 4.8vw, 27px);
-      line-height: 1.45;
-      font-weight: 800;
+    .copy {
+      display: grid;
+      gap: 18px;
+      padding: clamp(22px, 5vw, 42px);
+      min-width: 0;
+      max-width: 100%;
+    }
+    .lead {
+      font-size: clamp(22px, 5.2vw, 34px);
+      line-height: 1.32;
+      font-weight: 900;
+      min-width: 0;
+      max-width: 100%;
       overflow-wrap: anywhere;
       word-break: break-all;
-      text-wrap: pretty;
+    }
+    .sub {
+      color: #526254;
+      font-size: clamp(15px, 3.8vw, 18px);
+      line-height: 1.65;
+      font-weight: 700;
+      min-width: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      min-width: 0;
+    }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 54px;
+      padding: 14px 18px;
+      border-radius: 18px;
+      color: #fff;
+      background: var(--jd);
+      text-decoration: none;
+      font-size: 18px;
+      font-weight: 900;
+      min-width: 0;
+      max-width: 100%;
+      word-break: break-all;
+      box-shadow: 0 14px 30px rgba(225, 37, 27, .22);
+    }
+    .button.secondary {
+      color: #142019;
+      background: #eef8ef;
+      box-shadow: none;
     }
     .steps {
       display: grid;
@@ -102,139 +150,215 @@
       margin: 0;
       padding: 0;
       list-style: none;
-      text-align: left;
       min-width: 0;
+      max-width: 100%;
     }
     .step {
       display: grid;
-      grid-template-columns: 34px 1fr;
+      grid-template-columns: 34px minmax(0, 1fr);
       gap: 10px;
       align-items: start;
       min-width: 0;
-      padding: 14px 15px;
+      padding: 13px 14px;
       border: 1px solid rgba(28, 151, 54, .18);
       border-radius: 16px;
       background: #f8fbf7;
+      text-align: left;
     }
-    .step > div:last-child { min-width: 0; }
     .num {
       display: grid;
       place-items: center;
       width: 34px;
       height: 34px;
       border-radius: 50%;
-      background: #22d34e;
+      background: var(--green);
       color: #fff;
       font-size: 18px;
       font-weight: 900;
     }
     .step strong {
       display: block;
-      margin: 1px 0 3px;
       color: #112318;
       font-size: clamp(18px, 4.6vw, 23px);
       line-height: 1.25;
-      overflow-wrap: anywhere;
       word-break: break-all;
     }
     .step span {
       display: block;
+      margin-top: 4px;
       color: #4c6052;
       font-size: 15px;
       line-height: 1.45;
       font-weight: 700;
+      word-break: break-all;
+    }
+    .buy {
+      display: grid;
+      gap: 0;
+    }
+    .poster {
+      display: block;
+      min-height: 0;
+      background: #fff5f4;
+    }
+    .poster img {
+      display: block;
+      width: 100%;
+      height: clamp(300px, 82vw, 520px);
+      object-fit: cover;
+      object-position: top center;
+    }
+    .store {
+      display: grid;
+      gap: 18px;
+      align-content: center;
+      padding: clamp(22px, 5vw, 38px);
+      min-width: 0;
+      max-width: 100%;
+      background: linear-gradient(180deg, #fff 0%, #fff7f6 100%);
+    }
+    .store h2 {
+      font-size: clamp(25px, 6vw, 40px);
+      line-height: 1.12;
+      letter-spacing: 0;
+      min-width: 0;
+      max-width: 100%;
       overflow-wrap: anywhere;
       word-break: break-all;
     }
-    .hint {
-      color: #516154;
-      font-size: 15px;
-      line-height: 1.7;
-      font-weight: 600;
-      overflow-wrap: anywhere;
-      word-break: break-all;
+    .price {
+      color: var(--jd);
+      font-size: clamp(31px, 8vw, 52px);
+      line-height: 1;
+      font-weight: 950;
+    }
+    .price span {
+      color: #6f746f;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .qr-row {
+      display: grid;
+      grid-template-columns: 126px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid rgba(225, 37, 27, .14);
+      border-radius: 20px;
+      background: #fff;
+    }
+    .qr-row img {
+      width: 126px;
+      height: 126px;
+      border-radius: 14px;
+      background: #fff;
+    }
+    .qr-row strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+    .qr-row span {
+      color: #68716a;
+      font-size: 14px;
+      line-height: 1.5;
+      font-weight: 700;
+    }
+    .note {
+      color: #7a827c;
+      font-size: 13px;
+      line-height: 1.55;
+      font-weight: 700;
     }
     @media (min-width: 760px) {
-      body { align-items: center; }
-      main {
-        width: min(calc(100vw - var(--page-pad) - var(--page-pad)), 980px);
-        grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
-        text-align: left;
+      main { width: min(calc(100vw - var(--pad) - var(--pad)), 1120px); }
+      .hero, .buy {
+        grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
       }
-      .hero {
-        min-height: 100%;
-      }
-      .hero-copy {
+      .visual { min-height: 100%; }
+      .visual-title {
         justify-items: start;
-        padding: 30px;
+        padding: 34px;
       }
-      .product {
+      .visual img {
         object-position: center;
-        padding: 20px;
-        transform: scale(1.08);
+        padding: 22px;
+        transform: scale(1.05);
       }
-      .content {
-        justify-content: center;
+      .copy, .store { justify-content: center; }
+      .actions { grid-template-columns: 1fr 1fr; }
+      .poster img {
+        height: 100%;
+        min-height: 560px;
       }
-      .badge {
-        justify-self: start;
-      }
-      p {
-        font-size: clamp(22px, 2.3vw, 30px);
-      }
-    }
-    @media (prefers-color-scheme: dark) {
-      :root { background: #020703; color: #f4fff4; }
-      body {
-        background: linear-gradient(180deg, #071109 0%, #020703 100%);
-      }
-      main { background: rgba(7, 17, 9, .94); border-color: rgba(64,255,94,.16); box-shadow: none; }
-      .hero { background: linear-gradient(135deg, #152118 0%, #0b130d 100%); }
-      .hero-copy { background: linear-gradient(180deg, rgba(7,17,9,0) 0%, rgba(7,17,9,.9) 58%, #071109 100%); }
-      .badge { background: rgba(9,24,12,.9); color: #40ff5e; border-color: rgba(64,255,94,.32); }
-      .step { background: rgba(9,24,12,.78); border-color: rgba(64,255,94,.24); box-shadow: none; }
-      .num { background: #40ff5e; color: #061006; }
-      .step strong { color: #f4fff4; }
-      .step span { color: #9dc4a5; }
-      .hint { color: #95b49c; }
     }
   </style>
 </head>
 <body>
   <main>
-    <section class="hero" aria-label="乐奇 AI 眼镜">
-      <img class="product" src="https://static.rokidcdn.com/prod/rokid-website-glasses/2.1.1/_next/static/media/glasses.219d2675.png" alt="乐奇 AI 眼镜">
-      <div class="hero-copy">
-        <div class="badge">FOR ROKID GLASSES</div>
-        <h1>小惊喜已藏好</h1>
+    <section class="hero">
+      <div class="visual" aria-label="乐奇 AI 眼镜">
+        <img src="https://static.rokidcdn.com/prod/rokid-website-glasses/2.1.1/_next/static/media/glasses.219d2675.png" alt="乐奇 AI 眼镜">
+        <div class="visual-title">
+          <div class="badge">FOR ROKID GLASSES</div>
+          <h1>小惊喜已藏好</h1>
+        </div>
+      </div>
+      <div class="copy">
+        <p class="lead">这个二维码里的内容，只有戴上乐奇 AI 眼镜才能扫出来。</p>
+        <p class="sub">手机只能看到这张提示页。想解锁真正的小惊喜，戴上眼镜，用「扫一扫」看向二维码。</p>
+        <div class="actions">
+          <a class="button" href="https://u.jd.com/R1ABIyW" target="_blank" rel="noopener">去京东官方旗舰店</a>
+          <a class="button secondary" href="#buy">扫码或长按购买</a>
+        </div>
+        <ol class="steps" aria-label="乐奇 AI 眼镜扫码方式">
+          <li class="step">
+            <div class="num">1</div>
+            <div>
+              <strong>戴上乐奇 AI 眼镜</strong>
+              <span>把二维码放在视野中间。</span>
+            </div>
+          </li>
+          <li class="step">
+            <div class="num">2</div>
+            <div>
+              <strong>添加「扫一扫」</strong>
+              <span>打开 Rokid AI App，进入 主页 - 智能体商店，添加「扫一扫」。</span>
+            </div>
+          </li>
+          <li class="step">
+            <div class="num">3</div>
+            <div>
+              <strong>说「乐奇，扫一扫」</strong>
+              <span>看向二维码，解锁专属小惊喜。</span>
+            </div>
+          </li>
+        </ol>
       </div>
     </section>
-    <section class="content">
-      <p>你好呀！这个藏在二维码里的小惊喜，只有戴上乐奇 AI 眼镜才能扫出来哦！</p>
-      <ol class="steps" aria-label="乐奇 AI 眼镜扫码方式">
-        <li class="step">
-          <div class="num">1</div>
+
+    <section class="buy" id="buy">
+      <a class="poster" href="https://u.jd.com/R1ABIyW" target="_blank" rel="noopener">
+        <img src="./assets/rokid-jd-official.jpg" alt="乐奇 AI 眼镜京东官方旗舰店活动图">
+      </a>
+      <div class="store">
+        <div class="badge">乐奇京东官方旗舰店</div>
+        <h2>想看隐藏惊喜？先把眼镜安排上。</h2>
+        <div class="price">¥2523.65 <span>起，价格以京东页面为准</span></div>
+        <div class="actions">
+          <a class="button" href="https://u.jd.com/R1ABIyW" target="_blank" rel="noopener">点击去京东看看</a>
+          <a class="button secondary" href="./assets/jd-store-qr.svg" target="_blank" rel="noopener">打开购买二维码</a>
+        </div>
+        <div class="qr-row">
+          <img src="./assets/jd-store-qr.svg" alt="京东官方旗舰店二维码">
           <div>
-            <strong>戴上乐奇 AI 眼镜</strong>
-            <span>把二维码放在视野中间。</span>
+            <strong>扫码或长按识别</strong>
+            <span>也可以直接点击上方按钮，跳转乐奇京东官方旗舰店。</span>
           </div>
-        </li>
-        <li class="step">
-          <div class="num">2</div>
-          <div>
-            <strong>添加「扫一扫」</strong>
-            <span>打开 Rokid AI App，进入 主页 - 智能体商店，添加「扫一扫」。</span>
-          </div>
-        </li>
-        <li class="step">
-          <div class="num">3</div>
-          <div>
-            <strong>说「乐奇，扫一扫」</strong>
-            <span>看向二维码，解锁专属小惊喜。</span>
-          </div>
-        </li>
-      </ol>
-      <div class="hint">手机只能看到提示，真正内容只在乐奇 AI 眼镜里显示。</div>
+        </div>
+        <p class="note">本页面只负责引导。商品价格、优惠、库存和赠品以京东官方页面实时信息为准。</p>
+      </div>
     </section>
   </main>
 </body>
