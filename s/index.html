@@ -4,362 +4,352 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>乐奇 AI 眼镜专属惊喜</title>
+  <title>乐奇 AI 眼镜专属二维码</title>
   <style>
     :root {
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
-      background: #f6f7f3;
-      color: #101510;
-      --pad: clamp(16px, 4vw, 44px);
+      color: #111511;
+      background: #f6f8f4;
       --green: #20d24d;
-      --deep: #071109;
-      --jd: #e1251b;
+      --green-2: #eaf8ec;
+      --red: #e1251b;
+      --ink: #111511;
+      --muted: #647066;
+      --line: rgba(25, 60, 32, .1);
+      --pad: clamp(16px, 4vw, 36px);
     }
     * { box-sizing: border-box; }
-    html, body { max-width: 100%; overflow-x: hidden; }
+    html, body { margin: 0; max-width: 100%; overflow-x: hidden; }
     body {
-      margin: 0;
       min-height: 100vh;
       padding: var(--pad);
       background:
-        radial-gradient(circle at 12% 8%, rgba(32, 210, 77, .16), transparent 30%),
-        radial-gradient(circle at 92% 4%, rgba(225, 37, 27, .12), transparent 28%),
-        linear-gradient(180deg, #ffffff 0%, #eef4ec 100%);
+        radial-gradient(circle at 18% 5%, rgba(32,210,77,.18), transparent 28%),
+        radial-gradient(circle at 92% 12%, rgba(225,37,27,.1), transparent 24%),
+        linear-gradient(180deg, #fff 0%, #eff6ee 100%);
     }
     main {
-      width: min(calc(100vw - var(--pad) - var(--pad)), 348px);
-      max-width: 1120px;
+      width: min(calc(100vw - var(--pad) - var(--pad)), 330px);
       margin: 0 auto;
       display: grid;
-      gap: clamp(14px, 3vw, 22px);
+      gap: 14px;
     }
-    .hero, .buy {
+    .shell {
+      min-width: 0;
+      max-width: 100%;
       overflow: hidden;
-      border: 1px solid rgba(17, 35, 24, .08);
-      border-radius: clamp(24px, 5vw, 36px);
-      background: rgba(255, 255, 255, .9);
-      box-shadow: 0 24px 70px rgba(21, 67, 30, .13);
+      border: 1px solid var(--line);
+      border-radius: clamp(26px, 6vw, 42px);
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 26px 80px rgba(20, 66, 31, .14);
     }
     .hero {
       display: grid;
-      grid-template-columns: 1fr;
+      gap: 0;
     }
-    .visual {
+    .stage {
       position: relative;
-      min-height: clamp(220px, 58vw, 390px);
+      min-height: clamp(230px, 58vw, 430px);
       display: grid;
       align-items: end;
       overflow: hidden;
-      background: linear-gradient(135deg, #f9fbf8 0%, #dcebdd 100%);
+      background: linear-gradient(135deg, #f8fbf7 0%, #deecdf 100%);
     }
-    .visual img {
+    .stage::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 48%;
+      background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.96) 74%);
+    }
+    .glasses {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       object-fit: contain;
-      object-position: center 42%;
-      padding: 18px 0 46px;
-      transform: scale(1.14);
+      object-position: center 38%;
+      padding: 18px 0 66px;
+      transform: scale(1.12);
     }
-    .visual-title {
+    .brand {
       position: relative;
       z-index: 1;
       display: grid;
       gap: 10px;
       justify-items: center;
-      padding: 26px 22px 24px;
-      background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.9) 58%, #fff 100%);
+      padding: 24px 22px 28px;
+      text-align: center;
     }
-    .badge {
+    .pill {
       display: inline-flex;
       align-items: center;
       width: max-content;
       max-width: 100%;
       padding: 8px 13px;
-      border: 1px solid rgba(28, 151, 54, .24);
+      border: 1px solid rgba(22,133,45,.18);
       border-radius: 999px;
-      color: #16852d;
-      font-size: 14px;
+      color: #13852a;
+      background: rgba(255,255,255,.86);
+      font-size: 13px;
       font-weight: 900;
-      background: rgba(255,255,255,.78);
+      letter-spacing: 0;
     }
     h1, h2, p { margin: 0; }
     h1 {
-      font-size: clamp(34px, 9vw, 62px);
+      max-width: 10em;
+      font-size: clamp(34px, 9vw, 64px);
       line-height: 1.06;
       letter-spacing: 0;
     }
-    .copy {
+    .content {
       display: grid;
-      gap: 18px;
-      padding: clamp(22px, 5vw, 42px);
+      gap: 16px;
+      padding: clamp(22px, 5vw, 44px);
       min-width: 0;
-      max-width: 100%;
     }
     .lead {
-      font-size: clamp(22px, 5.2vw, 34px);
-      line-height: 1.32;
-      font-weight: 900;
-      min-width: 0;
-      max-width: 100%;
+      display: grid;
+      gap: 2px;
+      font-size: clamp(24px, 6.2vw, 42px);
+      line-height: 1.18;
+      font-weight: 950;
+      letter-spacing: 0;
       overflow-wrap: anywhere;
       word-break: break-all;
     }
+    .lead span:last-child {
+      color: #12a633;
+    }
     .sub {
-      color: #526254;
+      color: var(--muted);
       font-size: clamp(15px, 3.8vw, 18px);
       line-height: 1.65;
       font-weight: 700;
-      min-width: 0;
-      max-width: 100%;
       overflow-wrap: anywhere;
       word-break: break-all;
     }
     .actions {
       display: grid;
-      grid-template-columns: 1fr;
       gap: 10px;
       min-width: 0;
     }
     .button {
       display: inline-flex;
+      min-height: 54px;
       align-items: center;
       justify-content: center;
-      min-height: 54px;
       padding: 14px 18px;
       border-radius: 18px;
       color: #fff;
-      background: var(--jd);
+      background: var(--red);
       text-decoration: none;
       font-size: 18px;
       font-weight: 900;
-      min-width: 0;
-      max-width: 100%;
-      word-break: break-all;
-      box-shadow: 0 14px 30px rgba(225, 37, 27, .22);
+      box-shadow: 0 16px 34px rgba(225, 37, 27, .22);
     }
     .button.secondary {
-      color: #142019;
-      background: #eef8ef;
+      color: var(--ink);
+      background: #edf8ee;
       box-shadow: none;
+    }
+    .two-up {
+      display: grid;
+      gap: 14px;
+    }
+    .card {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+      max-width: 100%;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(255,255,255,.88);
+    }
+    .card h2 {
+      font-size: clamp(22px, 5vw, 30px);
+      line-height: 1.18;
+    }
+    .card p {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+      word-break: break-all;
     }
     .steps {
       display: grid;
-      gap: 10px;
+      gap: 9px;
       margin: 0;
       padding: 0;
       list-style: none;
-      min-width: 0;
-      max-width: 100%;
     }
     .step {
       display: grid;
-      grid-template-columns: 34px minmax(0, 1fr);
+      grid-template-columns: 30px minmax(0, 1fr);
       gap: 10px;
-      align-items: start;
+      align-items: center;
       min-width: 0;
-      padding: 13px 14px;
-      border: 1px solid rgba(28, 151, 54, .18);
-      border-radius: 16px;
-      background: #f8fbf7;
-      text-align: left;
     }
     .num {
       display: grid;
       place-items: center;
-      width: 34px;
-      height: 34px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      background: var(--green);
       color: #fff;
-      font-size: 18px;
+      background: var(--green);
+      font-size: 16px;
       font-weight: 900;
     }
-    .step strong {
-      display: block;
-      color: #112318;
-      font-size: clamp(18px, 4.6vw, 23px);
-      line-height: 1.25;
-      word-break: break-all;
-    }
     .step span {
+      color: #263229;
+      font-size: 16px;
+      line-height: 1.4;
+      font-weight: 850;
+    }
+    .qr-card {
+      grid-template-columns: 96px minmax(0, 1fr);
+      align-items: center;
+      background: linear-gradient(180deg, #fff 0%, #fff8f7 100%);
+    }
+    .qr-card img {
+      width: 96px;
+      height: 96px;
+      border: 1px solid rgba(225,37,27,.12);
+      border-radius: 18px;
+      background: #fff;
+    }
+    .qr-card strong {
       display: block;
-      margin-top: 4px;
-      color: #4c6052;
-      font-size: 15px;
-      line-height: 1.45;
-      font-weight: 700;
-      word-break: break-all;
-    }
-    .buy {
-      display: grid;
-      gap: 0;
-    }
-    .poster {
-      display: block;
-      min-height: 0;
-      background: #fff5f4;
-    }
-    .poster img {
-      display: block;
-      width: 100%;
-      height: clamp(300px, 82vw, 520px);
-      object-fit: cover;
-      object-position: top center;
-    }
-    .store {
-      display: grid;
-      gap: 18px;
-      align-content: center;
-      padding: clamp(22px, 5vw, 38px);
-      min-width: 0;
-      max-width: 100%;
-      background: linear-gradient(180deg, #fff 0%, #fff7f6 100%);
-    }
-    .store h2 {
-      font-size: clamp(25px, 6vw, 40px);
-      line-height: 1.12;
-      letter-spacing: 0;
-      min-width: 0;
-      max-width: 100%;
+      color: var(--red);
+      font-size: 20px;
+      line-height: 1.25;
+      margin-bottom: 5px;
       overflow-wrap: anywhere;
       word-break: break-all;
     }
-    .price {
-      color: var(--jd);
-      font-size: clamp(31px, 8vw, 52px);
-      line-height: 1;
-      font-weight: 950;
-    }
-    .price span {
-      color: #6f746f;
-      font-size: 14px;
-      font-weight: 800;
-    }
-    .qr-row {
+    .poster-link {
       display: grid;
-      grid-template-columns: 126px minmax(0, 1fr);
-      gap: 14px;
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 12px;
       align-items: center;
-      padding: 12px;
-      border: 1px solid rgba(225, 37, 27, .14);
+      min-width: 0;
+      max-width: 100%;
+      color: inherit;
+      text-decoration: none;
+      padding: 10px;
       border-radius: 20px;
-      background: #fff;
+      background: #fff7f6;
     }
-    .qr-row img {
-      width: 126px;
-      height: 126px;
-      border-radius: 14px;
-      background: #fff;
+    .poster-link img {
+      width: 72px;
+      height: 72px;
+      object-fit: cover;
+      object-position: top center;
+      border-radius: 16px;
     }
-    .qr-row strong {
+    .poster-link strong {
       display: block;
-      margin-bottom: 6px;
-      font-size: 18px;
+      font-size: 16px;
       line-height: 1.25;
+      overflow-wrap: anywhere;
+      word-break: break-all;
     }
-    .qr-row span {
-      color: #68716a;
-      font-size: 14px;
+    .poster-link span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+    }
+    .foot {
+      color: #77817a;
+      font-size: 12px;
       line-height: 1.5;
       font-weight: 700;
-    }
-    .note {
-      color: #7a827c;
-      font-size: 13px;
-      line-height: 1.55;
-      font-weight: 700;
+      text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-all;
     }
     @media (min-width: 760px) {
-      main { width: min(calc(100vw - var(--pad) - var(--pad)), 1120px); }
-      .hero, .buy {
-        grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+      main { gap: 18px; }
+      main { width: min(calc(100vw - var(--pad) - var(--pad)), 1040px); }
+      .hero {
+        grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
       }
-      .visual { min-height: 100%; }
-      .visual-title {
+      .stage { min-height: 100%; }
+      .glasses {
+        object-position: center;
+        padding: 24px;
+        transform: scale(1.04);
+      }
+      .brand {
         justify-items: start;
+        text-align: left;
         padding: 34px;
       }
-      .visual img {
-        object-position: center;
-        padding: 22px;
-        transform: scale(1.05);
-      }
-      .copy, .store { justify-content: center; }
+      .content { align-content: center; }
       .actions { grid-template-columns: 1fr 1fr; }
-      .poster img {
-        height: 100%;
-        min-height: 560px;
-      }
+      .two-up { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .qr-card { grid-template-columns: 112px minmax(0, 1fr); }
+      .qr-card img { width: 112px; height: 112px; }
     }
   </style>
 </head>
 <body>
   <main>
-    <section class="hero">
-      <div class="visual" aria-label="乐奇 AI 眼镜">
-        <img src="https://static.rokidcdn.com/prod/rokid-website-glasses/2.1.1/_next/static/media/glasses.219d2675.png" alt="乐奇 AI 眼镜">
-        <div class="visual-title">
-          <div class="badge">FOR ROKID GLASSES</div>
+    <section class="shell hero">
+      <div class="stage">
+        <img class="glasses" src="https://static.rokidcdn.com/prod/rokid-website-glasses/2.1.1/_next/static/media/glasses.219d2675.png" alt="乐奇 AI 眼镜">
+        <div class="brand">
+          <div class="pill">FOR ROKID GLASSES</div>
           <h1>小惊喜已藏好</h1>
         </div>
       </div>
-      <div class="copy">
-        <p class="lead">这个二维码里的内容，只有戴上乐奇 AI 眼镜才能扫出来。</p>
-        <p class="sub">手机只能看到这张提示页。想解锁真正的小惊喜，戴上眼镜，用「扫一扫」看向二维码。</p>
+      <div class="content">
+        <p class="lead"><span>手机看不到，</span><span>眼镜才看得到。</span></p>
+        <p class="sub">这是乐奇 AI 眼镜专属二维码。戴上眼镜，用「扫一扫」看向它。</p>
         <div class="actions">
           <a class="button" href="https://u.jd.com/R1ABIyW" target="_blank" rel="noopener">去京东官方旗舰店</a>
-          <a class="button secondary" href="#buy">扫码或长按购买</a>
+          <a class="button secondary" href="#how">我已有眼镜</a>
         </div>
-        <ol class="steps" aria-label="乐奇 AI 眼镜扫码方式">
-          <li class="step">
-            <div class="num">1</div>
-            <div>
-              <strong>戴上乐奇 AI 眼镜</strong>
-              <span>把二维码放在视野中间。</span>
-            </div>
-          </li>
-          <li class="step">
-            <div class="num">2</div>
-            <div>
-              <strong>添加「扫一扫」</strong>
-              <span>打开 Rokid AI App，进入 主页 - 智能体商店，添加「扫一扫」。</span>
-            </div>
-          </li>
-          <li class="step">
-            <div class="num">3</div>
-            <div>
-              <strong>说「乐奇，扫一扫」</strong>
-              <span>看向二维码，解锁专属小惊喜。</span>
-            </div>
-          </li>
-        </ol>
       </div>
     </section>
 
-    <section class="buy" id="buy">
-      <a class="poster" href="https://u.jd.com/R1ABIyW" target="_blank" rel="noopener">
-        <img src="./assets/rokid-jd-official.jpg" alt="乐奇 AI 眼镜京东官方旗舰店活动图">
-      </a>
-      <div class="store">
-        <div class="badge">乐奇京东官方旗舰店</div>
-        <h2>想看隐藏惊喜？先把眼镜安排上。</h2>
-        <div class="price">¥2523.65 <span>起，价格以京东页面为准</span></div>
-        <div class="actions">
-          <a class="button" href="https://u.jd.com/R1ABIyW" target="_blank" rel="noopener">点击去京东看看</a>
-          <a class="button secondary" href="./assets/jd-store-qr.svg" target="_blank" rel="noopener">打开购买二维码</a>
+    <section class="two-up">
+      <div class="card" id="how">
+        <h2>怎么解锁？</h2>
+        <ol class="steps">
+          <li class="step"><div class="num">1</div><span>戴上乐奇 AI 眼镜</span></li>
+          <li class="step"><div class="num">2</div><span>在 Rokid AI App 添加「扫一扫」</span></li>
+          <li class="step"><div class="num">3</div><span>看向二维码，说「乐奇，扫一扫」</span></li>
+        </ol>
+      </div>
+
+      <div class="card qr-card">
+        <img src="./assets/jd-store-qr.svg" alt="乐奇京东官方旗舰店二维码">
+        <div>
+          <strong>还没有眼镜？</strong>
+          <p>长按识别二维码，或点击上方按钮，去乐奇京东官方旗舰店看看。</p>
         </div>
-        <div class="qr-row">
-          <img src="./assets/jd-store-qr.svg" alt="京东官方旗舰店二维码">
-          <div>
-            <strong>扫码或长按识别</strong>
-            <span>也可以直接点击上方按钮，跳转乐奇京东官方旗舰店。</span>
-          </div>
-        </div>
-        <p class="note">本页面只负责引导。商品价格、优惠、库存和赠品以京东官方页面实时信息为准。</p>
       </div>
     </section>
+
+    <a class="poster-link" href="https://u.jd.com/R1ABIyW" target="_blank" rel="noopener">
+      <img src="./assets/rokid-jd-official.jpg" alt="乐奇 AI 眼镜京东活动图">
+      <div>
+        <strong>查看京东活动详情</strong>
+        <span>价格、优惠、赠品和库存以京东官方页面为准。</span>
+      </div>
+    </a>
+
+    <p class="foot">手机只能看到提示页，隐藏内容只在乐奇 AI 眼镜的「扫一扫」里显示。</p>
   </main>
 </body>
 </html>
