@@ -9,25 +9,67 @@
     :root {
       color-scheme: light dark;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
-      background: #f7f8f5;
+      background: #f4f7f2;
       color: #101510;
+      --page-pad: clamp(16px, 4vw, 40px);
     }
     * { box-sizing: border-box; }
+    html, body { max-width: 100%; overflow-x: hidden; }
     body {
       margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 28px;
-      background:
-        radial-gradient(circle at 50% 16%, rgba(64,255,94,.16), transparent 34%),
-        linear-gradient(180deg, #ffffff 0%, #eef5ec 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--page-pad);
+      background: linear-gradient(180deg, #ffffff 0%, #edf4ec 100%);
     }
     main {
-      width: min(520px, 100%);
+      width: min(calc(100vw - var(--page-pad) - var(--page-pad)), 360px);
+      min-width: 0;
+      max-width: 980px;
+      display: grid;
+      gap: 0;
+      text-align: center;
+      overflow: hidden;
+      border: 1px solid rgba(27, 68, 35, .08);
+      border-radius: 30px;
+      background: rgba(255, 255, 255, .86);
+      box-shadow: 0 24px 64px rgba(21, 67, 30, .14);
+    }
+    .hero {
+      position: relative;
+      min-height: clamp(230px, 58vw, 360px);
+      display: grid;
+      align-items: end;
+      overflow: hidden;
+      background: linear-gradient(135deg, #f8faf7 0%, #dcebdd 100%);
+    }
+    .product {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center 44%;
+      padding: clamp(10px, 3vw, 24px) 0 54px;
+      transform: scale(1.16);
+    }
+    .hero-copy {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+      padding: 26px 22px 24px;
+      background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.9) 58%, #fff 100%);
+    }
+    .content {
       display: grid;
       gap: 18px;
-      text-align: center;
+      justify-items: stretch;
+      padding: clamp(20px, 5vw, 36px);
+      min-width: 0;
     }
     .badge {
       justify-self: center;
@@ -47,34 +89,153 @@
     }
     p {
       margin: 0;
-      font-size: clamp(20px, 5vw, 28px);
+      font-size: clamp(19px, 4.8vw, 27px);
       line-height: 1.45;
       font-weight: 800;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+      text-wrap: pretty;
+    }
+    .steps {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      text-align: left;
+      min-width: 0;
+    }
+    .step {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      align-items: start;
+      min-width: 0;
+      padding: 14px 15px;
+      border: 1px solid rgba(28, 151, 54, .18);
+      border-radius: 16px;
+      background: #f8fbf7;
+    }
+    .step > div:last-child { min-width: 0; }
+    .num {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #22d34e;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
+    }
+    .step strong {
+      display: block;
+      margin: 1px 0 3px;
+      color: #112318;
+      font-size: clamp(18px, 4.6vw, 23px);
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+    }
+    .step span {
+      display: block;
+      color: #4c6052;
+      font-size: 15px;
+      line-height: 1.45;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+      word-break: break-all;
     }
     .hint {
       color: #516154;
       font-size: 15px;
       line-height: 1.7;
       font-weight: 600;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+    }
+    @media (min-width: 760px) {
+      body { align-items: center; }
+      main {
+        width: min(calc(100vw - var(--page-pad) - var(--page-pad)), 980px);
+        grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+        text-align: left;
+      }
+      .hero {
+        min-height: 100%;
+      }
+      .hero-copy {
+        justify-items: start;
+        padding: 30px;
+      }
+      .product {
+        object-position: center;
+        padding: 20px;
+        transform: scale(1.08);
+      }
+      .content {
+        justify-content: center;
+      }
+      .badge {
+        justify-self: start;
+      }
+      p {
+        font-size: clamp(22px, 2.3vw, 30px);
+      }
     }
     @media (prefers-color-scheme: dark) {
       :root { background: #020703; color: #f4fff4; }
       body {
-        background:
-          radial-gradient(circle at 50% 14%, rgba(64,255,94,.18), transparent 35%),
-          linear-gradient(180deg, #071109 0%, #020703 100%);
+        background: linear-gradient(180deg, #071109 0%, #020703 100%);
       }
+      main { background: rgba(7, 17, 9, .94); border-color: rgba(64,255,94,.16); box-shadow: none; }
+      .hero { background: linear-gradient(135deg, #152118 0%, #0b130d 100%); }
+      .hero-copy { background: linear-gradient(180deg, rgba(7,17,9,0) 0%, rgba(7,17,9,.9) 58%, #071109 100%); }
       .badge { background: rgba(9,24,12,.9); color: #40ff5e; border-color: rgba(64,255,94,.32); }
+      .step { background: rgba(9,24,12,.78); border-color: rgba(64,255,94,.24); box-shadow: none; }
+      .num { background: #40ff5e; color: #061006; }
+      .step strong { color: #f4fff4; }
+      .step span { color: #9dc4a5; }
       .hint { color: #95b49c; }
     }
   </style>
 </head>
 <body>
   <main>
-    <div class="badge">FOR ROKID GLASSES</div>
-    <h1>小惊喜已藏好</h1>
-    <p>你好呀！这个藏在二维码里的小惊喜，只有戴上乐奇 AI 眼镜才能扫出来哦！</p>
-    <div class="hint">打开乐奇 AI 眼镜里的「扫一扫」，再看向这个二维码。</div>
+    <section class="hero" aria-label="乐奇 AI 眼镜">
+      <img class="product" src="https://static.rokidcdn.com/prod/rokid-website-glasses/2.1.1/_next/static/media/glasses.219d2675.png" alt="乐奇 AI 眼镜">
+      <div class="hero-copy">
+        <div class="badge">FOR ROKID GLASSES</div>
+        <h1>小惊喜已藏好</h1>
+      </div>
+    </section>
+    <section class="content">
+      <p>你好呀！这个藏在二维码里的小惊喜，只有戴上乐奇 AI 眼镜才能扫出来哦！</p>
+      <ol class="steps" aria-label="乐奇 AI 眼镜扫码方式">
+        <li class="step">
+          <div class="num">1</div>
+          <div>
+            <strong>戴上乐奇 AI 眼镜</strong>
+            <span>把二维码放在视野中间。</span>
+          </div>
+        </li>
+        <li class="step">
+          <div class="num">2</div>
+          <div>
+            <strong>添加「扫一扫」</strong>
+            <span>打开 Rokid AI App，进入 主页 - 智能体商店，添加「扫一扫」。</span>
+          </div>
+        </li>
+        <li class="step">
+          <div class="num">3</div>
+          <div>
+            <strong>说「乐奇，扫一扫」</strong>
+            <span>看向二维码，解锁专属小惊喜。</span>
+          </div>
+        </li>
+      </ol>
+      <div class="hint">手机只能看到提示，真正内容只在乐奇 AI 眼镜里显示。</div>
+    </section>
   </main>
 </body>
 </html>
