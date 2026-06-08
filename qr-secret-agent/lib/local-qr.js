@@ -1,6 +1,6 @@
 import jpegDecode from './vendor/jpeg-decoder.js';
 import jsQR from './vendor/jsQR.js';
-import { PNG } from './vendor/pngjs.js';
+import UPNG from './vendor/upng.js';
 import { decodeWebP } from './webp.js';
 
 function asUint8(bytes) {
@@ -44,6 +44,12 @@ function hexHead(bytes) {
     .join('');
 }
 
+function exactArrayBuffer(bytes) {
+  if (!bytes) return null;
+  if (bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength) return bytes.buffer;
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+}
+
 function webpChunkType(bytes) {
   if (!bytes || bytes.length < 16) return '';
   if (
@@ -80,9 +86,10 @@ export function decodeImageFromBytes(inputBytes) {
     };
   }
   if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) {
-    const image = PNG.sync.read(bytes);
+    const image = UPNG.decode(exactArrayBuffer(bytes));
+    const rgba = new Uint8Array(UPNG.toRGBA8(image)[0]);
     return {
-      data: image.data instanceof Uint8ClampedArray ? image.data : new Uint8ClampedArray(image.data),
+      data: new Uint8ClampedArray(rgba),
       width: image.width,
       height: image.height,
       format: 'png',
