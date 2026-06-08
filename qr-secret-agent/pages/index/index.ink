@@ -2,6 +2,10 @@
 {
   "navigationBarTitleText": "扫一扫",
   "description": "拍摄二维码并在眼镜里显示智能卡片。",
+  "layout": {
+    "width": 640,
+    "height": 360
+  },
   "schema": {
     "data": {
       "type": "object",
@@ -23,7 +27,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.41';
+const APP_VERSION = '1.0.42';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
