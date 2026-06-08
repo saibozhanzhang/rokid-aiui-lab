@@ -23,7 +23,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.40';
+const APP_VERSION = '1.0.41';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -394,13 +394,39 @@ function leqiDecodeToJson(text) {
   if (!isLeqiCipher(payload)) return null;
   const plain = decodeLeqiPayload(payload);
   if (/^\s*\{/.test(plain)) {
-    return JSON.parse(plain);
+    return expandCompactLeqiPayload(JSON.parse(plain));
   }
   return {
     type: 'card',
     title: '乐奇密文',
     body: plain
   };
+}
+
+function expandCompactLeqiPayload(json) {
+  if (!json || typeof json !== 'object' || Array.isArray(json) || json.type) return json;
+  const typeMap = {
+    c: 'card',
+    w: 'wifi',
+    i: 'image',
+    u: 'url',
+    n: 'contact',
+    p: 'phone',
+    m: 'email',
+    g: 'place',
+    e: 'event'
+  };
+  const type = typeMap[json.t] || json.t || 'card';
+  if (type === 'wifi') return { type, ssid: json.s, password: json.p, auth: json.a, hidden: !!json.h };
+  if (type === 'card') return { type, title: json.a, body: json.b };
+  if (type === 'image') return { type, title: json.a, url: json.u || json.b };
+  if (type === 'url') return { type, title: json.a, url: json.u || json.b };
+  if (type === 'contact') return { type, name: json.n, org: json.o, tel: json.p, email: json.e };
+  if (type === 'phone') return { type, tel: json.p };
+  if (type === 'email') return { type, to: json.o, subject: json.s, body: json.b };
+  if (type === 'place' || type === 'geo') return { type: 'place', label: json.n, address: json.a, lat: json.x, lng: json.y };
+  if (type === 'event') return { type, title: json.a, start: json.s, end: json.e, location: json.l };
+  return json;
 }
 
 function buildDecodedCard(variant, title, subtitle, body, footnote) {
