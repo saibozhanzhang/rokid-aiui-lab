@@ -22,12 +22,13 @@ import wx from 'wx';
 import { AudioPlayer } from 'audio';
 import { BarcodeDetector } from 'barcode';
 import { decodeWebPGrayFromBytes, getImageExtFromBytes, getWebPInfoFromBytes } from '../../lib/fast-barcode.js';
+import { decodeQrFromBytesAsync } from '../../lib/local-qr.js';
 
 const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.44';
+const APP_VERSION = '1.0.46';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -2250,6 +2251,29 @@ export default {
     throw lastErr || new Error('没有可识别输入');
   },
 
+  async decodeWithLocalQr(photo) {
+    const bytes = this.getPhotoBinary(photo);
+    if (!bytes) {
+      this.appendTrace('本地跳过 无图片二进制');
+      return null;
+    }
+    const start = Date.now();
+    try {
+      this.setData({ decodeStepText: '正在本地增强识别' });
+      const result = await decodeQrFromBytesAsync(bytes);
+      const elapsed = Date.now() - start;
+      this.scanDetectMs = (this.scanDetectMs || 0) + elapsed;
+      this.appendTrace(`本地 ${result && result.found ? '中' : '空'} ${elapsed}ms`);
+      if (result && result.found) {
+        return normalizeDecodeResult(result);
+      }
+      return result;
+    } catch (err) {
+      this.appendTrace(`本地错 ${getErrorText(err)}`);
+      return null;
+    }
+  },
+
   async decodeWithRokidBarcode(photo) {
     this.decodeTrace = [];
     this.lastDecodedPhotoImage = null;
@@ -2266,6 +2290,8 @@ export default {
     } catch (err) {
       lastErr = err;
     }
+    const localResult = await this.decodeWithLocalQr(photo);
+    if (localResult && localResult.found) return localResult;
     if (this.lastDecodedPhotoImage && this.lastDecodedPhotoImage.format === 'webp-gray') {
       if (lastEmpty) {
         lastEmpty.rawPreview = this.decodeTrace && this.decodeTrace.length ? this.decodeTrace.join(' / ') : lastEmpty.rawPreview;

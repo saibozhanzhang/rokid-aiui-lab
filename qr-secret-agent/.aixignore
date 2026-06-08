@@ -2,7 +2,3 @@ node_modules
 .DS_Store
 *.aix
 card-preview.html
-lib/local-qr.js
-lib/vendor/jsQR.js
-lib/vendor/pngjs.js
-lib/vendor/jpeg-decoder.js

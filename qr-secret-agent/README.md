@@ -2,6 +2,16 @@
 
 普通人看到的是二维码，佩戴 Rokid Glasses 的人打开这个 AIUI Agent 后能看到被整理过的智能卡片。
 
+## v1.0.46 能力
+
+- 修正 `.aixignore`，把 `local-qr.js`、`jsQR`、`pngjs`、`jpeg-decoder` 正式打进 AIX 包
+- 保证 `v1.0.45` 的本地高密度二维码兜底在真机包内可用
+
+## v1.0.45 能力
+
+- 新增本地 `jsQR` 兜底：Rokid `BarcodeDetector` 扫不到高密度二维码时，会继续用本地解码器识别 PNG/JPG/WebP
+- Craft 摄像头调试上传图片可以验证高密度短链接二维码，不再只显示“没有扫到”
+
 ## v1.0.44 能力
 
 - 进一步压缩首屏三行提示高度，适配 Craft 嵌入卡片的 `448 x 150` 小视口
