@@ -27,7 +27,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.43';
+const APP_VERSION = '1.0.44';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -2701,7 +2701,8 @@ export default {
 <style>
 .page {
   width: 100%;
-  height: 100vh;
+  height: 100%;
+  min-height: 150px;
   box-sizing: border-box;
   padding: 9px;
   background: transparent;
@@ -2757,7 +2758,7 @@ export default {
 .intro-card {
   width: 100%;
   height: 100%;
-  padding: 8px 14px;
+  padding: 4px 12px;
   box-sizing: border-box;
   flex-direction: column;
   align-items: center;
@@ -2767,8 +2768,8 @@ export default {
 
 .intro-main {
   color: #ffffff;
-  font-size: 34px;
-  line-height: 42px;
+  font-size: 28px;
+  line-height: 34px;
   font-weight: 900;
   text-align: center;
   width: 100%;
@@ -2776,12 +2777,12 @@ export default {
 
 .intro-action {
   color: #40ff5e;
-  font-size: 24px;
-  line-height: 32px;
+  font-size: 20px;
+  line-height: 25px;
   font-weight: 800;
   text-align: center;
   width: 100%;
-  margin-top: 4px;
+  margin-top: 1px;
 }
 
 .text-layer {
