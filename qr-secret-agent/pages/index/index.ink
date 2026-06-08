@@ -28,7 +28,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.46';
+const APP_VERSION = '1.0.47';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -772,6 +772,13 @@ function imageMimeFromExt(ext) {
 
 function stripDataUrl(value) {
   return String(value || '').replace(/^data:image\/\w+;base64,/i, '');
+}
+
+function base64ToBytes(value) {
+  const text = stripDataUrl(value).replace(/\s+/g, '');
+  if (!text) return null;
+  const bytes = base64UrlDecode(text);
+  return bytes && bytes.length ? new Uint8Array(bytes) : null;
 }
 
 function base64LooksLikeImage(value) {
@@ -1933,6 +1940,11 @@ export default {
     ];
     for (let i = 0; i < candidates.length; i++) {
       const bytes = bytesFromBinary(candidates[i]);
+      if (bytes && bytes.byteLength > 32) return bytes;
+    }
+    const base64 = this.getPhotoBase64(photo);
+    if (base64) {
+      const bytes = base64ToBytes(base64);
       if (bytes && bytes.byteLength > 32) return bytes;
     }
     return null;
