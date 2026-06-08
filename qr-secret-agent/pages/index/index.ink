@@ -28,7 +28,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.47';
+const APP_VERSION = '1.0.48';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -2058,6 +2058,9 @@ export default {
     this.decodeTrace = this.decodeTrace || [];
     this.decodeTrace.push(item);
     if (this.decodeTrace.length > 8) this.decodeTrace.shift();
+    try {
+      console.log(`[qr-trace] ${item}`);
+    } catch (err) {}
   },
 
   async canvasImageDataFromPath(filePath, label) {
