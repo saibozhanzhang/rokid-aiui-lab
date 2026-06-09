@@ -2,6 +2,16 @@
 
 普通人看到的是二维码，佩戴 Rokid Glasses 的人打开这个 AIUI Agent 后能看到被整理过的智能卡片。
 
+## v1.0.51 能力
+
+- 扫码失败音效单独提高播放音量：失败提示从 `0.18` 提到 `0.68`
+- 成功音效继续保持 `0.18`，避免成功提示过响
+
+## v1.0.50 能力
+
+- Craft / 本地 PNG 测试图改用轻量 `UPNG + pako` 解码，替换不兼容的 `pngjs`
+- PNG/JPEG 调试图优先走本地 `jsQR`，减少无效原生检测等待
+
 ## v1.0.46 能力
 
 - 修正 `.aixignore`，把 `local-qr.js`、`jsQR`、`pngjs`、`jpeg-decoder` 正式打进 AIX 包

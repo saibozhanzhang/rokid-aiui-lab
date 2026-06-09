@@ -28,7 +28,7 @@ const DEFAULT_ENDPOINT = '';
 const DEFAULT_PROVIDER = 'rokid';
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const DOUBLE_TAP_MS = 420;
-const APP_VERSION = '1.0.50';
+const APP_VERSION = '1.0.51';
 const BARCODE_FORMATS = ['qr_code'];
 const BARCODE_CANVAS_ID = 'decodeCanvas';
 const BARCODE_CANVAS_SIZE = 360;
@@ -87,7 +87,10 @@ const EFFECT_AUDIO = {
   success: '../../assets/success.mp3',
   fail: '../../assets/fail.mp3'
 };
-const EFFECT_VOLUME = 0.18;
+const EFFECT_VOLUME = {
+  success: 0.18,
+  fail: 0.68
+};
 const EFFECT_POOL_SIZE = 2;
 const EFFECT_COOLDOWN_MS = 120;
 
@@ -1601,7 +1604,7 @@ export default {
       player.src = src;
       player.autoplay = false;
       player.loop = false;
-      if ('volume' in player) player.volume = EFFECT_VOLUME;
+      if ('volume' in player) player.volume = EFFECT_VOLUME[name] || 0.18;
       player.play();
       entry.players[slot] = player;
     } catch (err) {

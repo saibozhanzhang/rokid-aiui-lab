@@ -1,6 +1,6 @@
 {
   "name": "扫一扫",
-  "version": "1.0.50",
+  "version": "1.0.51",
   "type": "scene",
   "category": "life",
   "description": "用 Rokid Glasses 自带 Barcode API 扫描高清短链二维码，手机看到提示页，眼镜解出隐藏卡片。",
